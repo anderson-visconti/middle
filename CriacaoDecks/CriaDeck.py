@@ -8,7 +8,7 @@ from fCriacao import *
 
 # Caminhos -------------------------------------------------------------------------------------------------------------
 strPath = r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2016\12\0-base'                # Caminho para onde estao os arquivos que servirao de base
-strPathExport = r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2016\12\0-base\201703\decomp-carga'   # Caminho para exportacao dos arquivos criados
+strPathExport = r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2016\12\0-base\201701\decomp-carga'   # Caminho para exportacao dos arquivos criados
 # ----------------------------------------------------------------------------------------------------------------------
 
 # Variaveis de Configuracao---------------------------------------------------------------------------------------------
