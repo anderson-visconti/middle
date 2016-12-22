@@ -17,7 +17,7 @@ nome_arquivo = [ r'prate.01.2016121800.daily.nc',
                 ]                         # nome do arquivo
 nome_arquivo_normais = r'precip.mon.ltm_enhanced.nc'
 nomes_shape = ['Bacia6']
-
+'ddsdsd '
 sub_set = {'lat': [-35, 12],
            'lon': [275, 330]
            }                                         # pontos de lat e long a serem capturados
