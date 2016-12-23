@@ -1,15 +1,14 @@
 import pandas as pd
 import numpy as np
 from netCDF4 import Dataset, num2date, MFDataset
-from datetime import *
 
 path = r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Chuva'
 nomes = {'variavel': 'cmorph','base': 'cmorph.3hr-025deg.', 'extensao':'.nc'}
 nc_vars = {'chuva': 'cmorph_precip',
            'lat': 'lat',
            'lon': 'lon',
-           'tempo': 'time',
-           'tempo_ref':'1970-01-01 00:00:00'}
+           'tempo': 'time'}
+
 coords = {'lat':[-22, -20],
           'lon':[313.4, 316]}
 
@@ -29,7 +28,6 @@ for i in range(0, len(temp)):   # cria caminhos dos arquivos
         extensao=nomes['extensao']))
 
 file = MFDataset(caminhos)
-x = file.variables['time']
 lats = file.variables[nc_vars['lat']][:]  # pega latitutes
 lons = file.variables[nc_vars['lon']][:]  # pega longitudes
 
@@ -42,7 +40,6 @@ sub_lats = lats[lat_inds[0]]
 sub_lons = lons[lon_inds[0]]
 sub_times =num2date (file.variables[nc_vars['tempo']][:], file.variables[nc_vars['tempo']].units)
 precip = file.variables[nc_vars['chuva']][:, lat_inds[0], lon_inds[0]]
-print file.variables['time'].units
 dados = []
 
 for i in range(0, precip.shape[0]): # itera sobre o tempo
@@ -55,6 +52,3 @@ for i in range(0, precip.shape[0]): # itera sobre o tempo
 
 df = pd.DataFrame(data=dados, columns=['data_3h', 'lat', 'lon', 'precip_3h'])
 df_indexado = df.set_index(['data_3h', 'lat', 'lon'])
-
-print df_indexado
-pass
