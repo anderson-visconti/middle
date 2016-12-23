@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from netCDF4 import Dataset, num2date, MFDataset
+import os
 
 path = r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Chuva'
 nomes = {'variavel': 'cmorph','base': 'cmorph.3hr-025deg.', 'extensao':'.nc'}
@@ -12,7 +13,7 @@ nc_vars = {'chuva': 'cmorph_precip',
 coords = {'lat':[-22, -20],
           'lon':[313.4, 316]}
 
-tempos = {'t_inicial': '2016-01-01',
+tempos = {'t_inicial': '2016-12-10',
           't_final': '2016-12-10'}
 
 temp = pd.date_range(start=tempos['t_inicial'], end=tempos['t_final'], freq='D', tz='UTC')
@@ -49,6 +50,19 @@ for i in range(0, precip.shape[0]): # itera sobre o tempo
                           sub_lats[j],
                           sub_lons[k],
                           precip[i, j, k] * 3])
-
+df_24h = pd.DataFrame()
 df = pd.DataFrame(data=dados, columns=['data_3h', 'lat', 'lon', 'precip_3h'])
 df_indexado = df.set_index(['data_3h', 'lat', 'lon'])
+df_indexado = df_indexado.unstack()
+df_indexado = df_indexado.unstack()
+#print df_indexado.head()
+
+df_24h = (df_indexado.resample('D').sum()).stack()
+df_24h = df_24h.stack()
+df_indexado = df_indexado.stack()
+df_indexado = df_indexado.stack()
+df_indexado.to_csv(r'C:\Users\anderson.visconti\Desktop\Nova pasta\chuva-3.csv')
+df_24h.to_csv(r'C:\Users\anderson.visconti\Desktop\Nova pasta\chuva-24.csv')
+pass
+
+
