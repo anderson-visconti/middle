@@ -53,14 +53,9 @@ for i in range(0, precip.shape[0]): # itera sobre o tempo
 df_24h = pd.DataFrame()
 df = pd.DataFrame(data=dados, columns=['data_3h', 'lat', 'lon', 'precip_3h'])
 df_indexado = df.set_index(['data_3h', 'lat', 'lon'])
-df_indexado = df_indexado.unstack()
-df_indexado = df_indexado.unstack()
-#print df_indexado.head()
+# calcula chuva acumulada em 24 h
+df_24h = df_indexado.unstack(level=[1,2]).resample('D').sum().stack(level=[2,1]).swaplevel(1,2)
 
-df_24h = (df_indexado.resample('D').sum()).stack()
-df_24h = df_24h.stack()
-df_indexado = df_indexado.stack()
-df_indexado = df_indexado.stack()
 df_indexado.to_csv(r'C:\Users\anderson.visconti\Desktop\Nova pasta\chuva-3.csv')
 df_24h.to_csv(r'C:\Users\anderson.visconti\Desktop\Nova pasta\chuva-24.csv')
 pass
