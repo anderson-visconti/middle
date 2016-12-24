@@ -5,14 +5,15 @@ from datetime import datetime
 
 t1 = datetime.now()
 path = r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Chuva'
-nomes = {'variavel': 'cmorph','base': 'cmorph.3hr-025deg.', 'extensao':'.nc'}
+path_export = r'C:\Users\ander\Desktop\Nova pasta'
+nomes = {'variavel': 'cmorph', 'base': 'cmorph.3hr-025deg.', 'extensao': '.nc'}
 nc_vars = {'chuva': 'cmorph_precip',
            'lat': 'lat',
            'lon': 'lon',
            'tempo': 'time'}
 
-coords = {'lat':[-22, -20],
-          'lon':[313.4, 316]}
+coords = {'lat': [-22, -20],
+          'lon': [313.4, 316]}
 
 tempos = {'t_inicial': '2016-01-20',
           't_final': '2016-12-13'}
@@ -40,31 +41,29 @@ lon_inds = np.where((lons >= coords['lon'][0]) & (lons <= coords['lon'][1]))
 # subset dos dados
 sub_lats = lats[lat_inds[0]]
 sub_lons = lons[lon_inds[0]]
-sub_times =num2date (file.variables[nc_vars['tempo']][:], file.variables[nc_vars['tempo']].units)
+sub_times = num2date(file.variables[nc_vars['tempo']][:], file.variables[nc_vars['tempo']].units)
 precip = file.variables[nc_vars['chuva']][:, lat_inds[0], lon_inds[0]]
 dados = []
 
-for i in range(0, precip.shape[0]): # itera sobre o tempo
+for i in range(0, precip.shape[0]):  # tera sobre o tempo
     for j in range(0, precip.shape[1]):  # itera sobre lat
         for k in range(0, precip.shape[2]):  # itera sobre lon
             dados.append([sub_times[i],
                           sub_lats[j],
                           sub_lons[k],
                           precip[i, j, k] * 3])
-df_24h = pd.DataFrame()
+
 df = pd.DataFrame(data=dados, columns=['data_3h', 'lat', 'lon', 'precip_3h'])
 df_indexado = df.set_index(['data_3h', 'lat', 'lon'])
 # calcula chuva acumulada em 24 h
-df_24h = df_indexado.unstack(level=[2,1]).resample('D').sum().stack(level=[2, 1])
+df_24h = df_indexado.unstack(level=[2, 1]).resample('D').sum().stack(level=[2, 1])
+# renomeia colunas
 df_24h.index = df_24h.index.set_names('data', level=0)
 df_24h.rename(columns={'precip_3h': 'precip_24h'}, inplace=True)
-df_tabular = df_24h.unstack(level=[2,1]).resample('D').sum()
-#df_tabular.index = df_tabular.index.set_names('data')
-
-df_indexado.to_csv(r'C:\Users\ander\Desktop\Nova pasta\chuva-3.csv', sep=';', decimal=',')
-df_24h.to_csv(r'C:\Users\ander\Desktop\Nova pasta\chuva-24.csv', sep=';', decimal=',')
-df_tabular.to_csv(r'C:\Users\ander\Desktop\Nova pasta\chuva-tab.csv', sep=';', decimal=',')
-print '{}: {}'.format('Tempo total', (datetime.now() - t1).total_seconds())
-pass
-
-
+# monta dataframe tabular
+df_tabular = df_24h.unstack(level=[2, 1]).resample('D').sum()
+# esreve arquivos .csv
+df_indexado.to_csv(r'{}\chuva-3.csv'.format(path_export), sep=';', decimal=',')
+df_24h.to_csv(r'{}\chuva-24.csv'.format(path_export), sep=';', decimal=',')
+df_tabular.to_csv(r'{}\chuva-tab.csv'.format(path_export), sep=';', decimal=',')
+print '{}: {}s'.format('Tempo total', (datetime.now() - t1).total_seconds())
