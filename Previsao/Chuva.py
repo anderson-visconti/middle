@@ -1,8 +1,9 @@
 import pandas as pd
 import numpy as np
-from netCDF4 import Dataset, num2date, MFDataset
-import os
+from netCDF4 import *
+from datetime import datetime
 
+t1 = datetime.now()
 path = r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Chuva'
 nomes = {'variavel': 'cmorph','base': 'cmorph.3hr-025deg.', 'extensao':'.nc'}
 nc_vars = {'chuva': 'cmorph_precip',
@@ -13,8 +14,8 @@ nc_vars = {'chuva': 'cmorph_precip',
 coords = {'lat':[-22, -20],
           'lon':[313.4, 316]}
 
-tempos = {'t_inicial': '2016-12-10',
-          't_final': '2016-12-10'}
+tempos = {'t_inicial': '2016-01-20',
+          't_final': '2016-12-13'}
 
 temp = pd.date_range(start=tempos['t_inicial'], end=tempos['t_final'], freq='D', tz='UTC')
 caminhos = []
@@ -54,10 +55,16 @@ df_24h = pd.DataFrame()
 df = pd.DataFrame(data=dados, columns=['data_3h', 'lat', 'lon', 'precip_3h'])
 df_indexado = df.set_index(['data_3h', 'lat', 'lon'])
 # calcula chuva acumulada em 24 h
-df_24h = df_indexado.unstack(level=[1,2]).resample('D').sum().stack(level=[2,1]).swaplevel(1,2)
+df_24h = df_indexado.unstack(level=[2,1]).resample('D').sum().stack(level=[2, 1])
+df_24h.index = df_24h.index.set_names('data', level=0)
+df_24h.rename(columns={'precip_3h': 'precip_24h'}, inplace=True)
+df_tabular = df_24h.unstack(level=[2,1]).resample('D').sum()
+#df_tabular.index = df_tabular.index.set_names('data')
 
-df_indexado.to_csv(r'C:\Users\anderson.visconti\Desktop\Nova pasta\chuva-3.csv')
-df_24h.to_csv(r'C:\Users\anderson.visconti\Desktop\Nova pasta\chuva-24.csv')
+df_indexado.to_csv(r'C:\Users\ander\Desktop\Nova pasta\chuva-3.csv', sep=';', decimal=',')
+df_24h.to_csv(r'C:\Users\ander\Desktop\Nova pasta\chuva-24.csv', sep=';', decimal=',')
+df_tabular.to_csv(r'C:\Users\ander\Desktop\Nova pasta\chuva-tab.csv', sep=';', decimal=',')
+print '{}: {}'.format('Tempo total', (datetime.now() - t1).total_seconds())
 pass
 
 
