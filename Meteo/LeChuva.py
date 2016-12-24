@@ -114,7 +114,7 @@ mapa = Basemap(llcrnrlon=lons_subset[0],
                projection='mill',
                lon_0=0.5 * (lons_subset[0] + lons_subset[lons_subset.size - 1]),
                lat_0=0.5 * (abs(lats_subset[0]) + abs(lats_subset[lats_subset.size - 1])),
-               resolution='c'
+               resolution='f'
                )
 
 mapa.drawcoastlines(linewidth=1.50)
