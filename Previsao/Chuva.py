@@ -76,5 +76,5 @@ def pega_chuva(paths, nc_vars, coords, tempos):
     # df_indexado.to_csv(r'{}\chuva-3.csv'.format(path_export), sep=';', decimal=',')
     df_24h.to_csv(r'{}\chuva-24.csv'.format(path['path_export']), sep=';', decimal=',')
     # df_tabular.to_csv(r'{}\chuva-tab.csv'.format(path_export), sep=';', decimal=',')
-    print '{}: {}s'.format('Tempo total', (datetime.now() - t1).total_seconds())
+    print '{}: {}s'.format('Tempo total para captura dos dados de chuva', (datetime.now() - t1).total_seconds())
     return df_24h, df_tabular
