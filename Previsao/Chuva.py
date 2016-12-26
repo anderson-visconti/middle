@@ -5,7 +5,7 @@ def pega_chuva(paths, nc_vars, coords, tempos):
     :param coords: dicionario com lat/lon para subset dos dados
     :param tempos: dicionario com t_inicial e t_final para recorte dos dados
     :return: df_24h - dataframe com dados acumulados de chuva em 24 horas
-     :return: df_tabular - dataframe com dados acumulados de chuva em 24 horas em formato tabular
+    :return: df_tabular - dataframe com dados acumulados de chuva em 24 horas em formato tabular
     '''
     import pandas as pd
     import numpy as np
