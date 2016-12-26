@@ -4,8 +4,9 @@ from netCDF4 import *
 from datetime import datetime
 
 t1 = datetime.now()
-path = r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Chuva'
-path_export = r'C:\Users\ander\Desktop\Nova pasta'
+path = {'path_chuva': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Chuva',
+        'path_export': r'C:\Users\ander\Desktop\Nova pasta'}
+
 nomes = {'variavel': 'cmorph', 'base': 'cmorph.3hr-025deg.', 'extensao': '.nc'}
 nc_vars = {'chuva': 'cmorph_precip',
            'lat': 'lat',
@@ -23,7 +24,7 @@ caminhos = []
 
 for i in range(0, len(temp)):   # cria caminhos dos arquivos
     caminhos.append('{path}\{variavel}\{year}\{nome_base}{data_form}{extensao}'.format(
-        path=path,
+        path=path['path_chuva'],
         variavel=nomes['variavel'],
         year=temp[i].year,
         nome_base=nomes['base'],
@@ -63,7 +64,8 @@ df_24h.rename(columns={'precip_3h': 'precip_24h'}, inplace=True)
 # monta dataframe tabular
 df_tabular = df_24h.unstack(level=[2, 1]).resample('D').sum()
 # esreve arquivos .csv
-df_indexado.to_csv(r'{}\chuva-3.csv'.format(path_export), sep=';', decimal=',')
-df_24h.to_csv(r'{}\chuva-24.csv'.format(path_export), sep=';', decimal=',')
-df_tabular.to_csv(r'{}\chuva-tab.csv'.format(path_export), sep=';', decimal=',')
+# df_indexado.to_csv(r'{}\chuva-3.csv'.format(path_export), sep=';', decimal=',')
+df_24h.to_csv(r'{}\chuva-24.csv'.format(path['path_export']), sep=';', decimal=',')
+# df_tabular.to_csv(r'{}\chuva-tab.csv'.format(path_export), sep=';', decimal=',')
 print '{}: {}s'.format('Tempo total', (datetime.now() - t1).total_seconds())
+del df_24h, df, df_tabular, df_indexado , file
