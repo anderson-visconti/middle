@@ -1,4 +1,12 @@
 def pega_chuva(paths, nc_vars, coords, tempos):
+    '''
+    :param paths: dicionario de caminhos
+    :param nc_vars: dicionario com nomes das variaveis do arquivo netcdf
+    :param coords: dicionario com lat/lon para subset dos dados
+    :param tempos: dicionario com t_inicial e t_final para recorte dos dados
+    :return: df_24h - dataframe com dados acumulados de chuva em 24 horas
+     :return: df_tabular - dataframe com dados acumulados de chuva em 24 horas em formato tabular
+    '''
     import pandas as pd
     import numpy as np
     from netCDF4 import *
@@ -69,5 +77,4 @@ def pega_chuva(paths, nc_vars, coords, tempos):
     df_24h.to_csv(r'{}\chuva-24.csv'.format(path['path_export']), sep=';', decimal=',')
     # df_tabular.to_csv(r'{}\chuva-tab.csv'.format(path_export), sep=';', decimal=',')
     print '{}: {}s'.format('Tempo total', (datetime.now() - t1).total_seconds())
-    del df_24h, df, df_tabular, df_indexado , file
     return df_24h, df_tabular
