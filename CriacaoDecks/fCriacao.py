@@ -907,7 +907,7 @@ def fEscreveDadger(strPathSource, strPathExport, strNomeArqv, vMeses, vAnos, vCo
             fileExport.write('&\n&   DADOS PARA O PROGRAMA CONFIGURADOR DO ARQUIVO DE CENARIOS DE VAZOES:\n&\n&\n&\n')
             fileExport.write('& VAZOES                              (COLUNAS: 40 A 70)\n')
             fileExport.write('& ARQ. DE VAZOES PREVISTAS - HIDROL => PREVS.RV0\n')
-            fileExport.write('& HISTORICO DE VAZOES      - HIDROL => %d VAZOESC.DAT\n' %(vAnos[0] - 2))
+            fileExport.write('& HISTORICO DE VAZOES      - HIDROL => %d VAZOES.DAT\n' %(vAnos[0] - 2))
             fileExport.write('& ARQ. DE POSTOS           - HIDROL => POSTOS.DAT\n')
             fileExport.write('& MES INICIAL DO ESTUDO             => ' + '{:02d}'.format(vMeses[0]) + '{:>7}'.format(vAnos[0]) +  '\n')
             fileExport.write('& MES FINAL DO ESTUDO               => ' + '{:02d}'.format(vMeses[1]) + '{:>7}'.format(vAnos[1])  + '\n')
