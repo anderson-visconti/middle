@@ -8,14 +8,14 @@ from fCriacao import *
 
 # Caminhos -------------------------------------------------------------------------------------------------------------
 strPath = r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\01\0-base'                # Caminho para onde estao os arquivos que servirao de base
-strPathExport = r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\01\0-base\201702\decomp'   # Caminho para exportacao dos arquivos criados
+strPathExport = r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\01\0-base\201705'   # Caminho para exportacao dos arquivos criados
 # ----------------------------------------------------------------------------------------------------------------------
 
 # Variaveis de Configuracao---------------------------------------------------------------------------------------------
 intAnoInicial = 2017                    # Ano Inicial do Deck do Newave a ser baseado
 intAnoFinal = 2021                      # Ano Final do Deck do Newave a ser baseado
-strDataInicial = '28/01/2017'           # Data Inicial do PMO a ser gerado
-vMeses = [2, 3]                        # Vetor com meses do PMO a ser gerado [0] - Mes do estagio 1 e [1] - Mes do ultimo estagio
+strDataInicial = '29/04/2017'           # Data Inicial do PMO a ser gerado
+vMeses = [5, 6]                        # Vetor com meses do PMO a ser gerado [0] - Mes do estagio 1 e [1] - Mes do ultimo estagio
 vAnos = [2017, 2017]                    # Vetor com Anos do PMO a ser gerado [0] - Ano do estagio 1 e [1] - Ano do ultimo estagio
 EstM1 = 5                               # Numero de semanas do primeiro mes do PMO a ser gerado
 vRee = [1, 6, 7, 5, 10, 2, 3, 4, 8]     # Ordem dos REEs
