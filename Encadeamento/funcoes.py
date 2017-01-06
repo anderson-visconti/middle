@@ -291,7 +291,7 @@ def fEncadeamento(Path, PathScript, nProc, nNos, numVersaoNewave, numVersaoDecom
             os.system('mpiexec -n %s %s/newave%s_L >> log.txt' %(nProc, dBinarios['newave'], numVersaoNewave)) # executa newave
             #os.system('mpiexec -n %s -f %s %s/newave%s_L >> log.txt' %(nProc, fileNos, dBinarios['newave'], numVersaoNewave)) # executa newave
             os.system('cp %s ./' %(os.path.join(PathScript, 'nwlistop.dat')))    # copia arquivo nwlisotp.dat
-            os.system('{0}/nwlistop{1}_L >> log.txt'.format(dBinarios['newave'], numVersaoNewave))   #executa nwlitop.dat
+            os.system('{0}/nwlistop{1}_L >> log.txt'.format(dBinarios['newave'], numVersaoNewave))   # executa nwlitop.dat
             # ----------------------------------------------------------------------------------------------------------
 
             # Executando processos do decomp ---------------------------------------------------------------------------

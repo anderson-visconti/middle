@@ -8,9 +8,9 @@ O script acrescenta 1 ano apenas para facilitar ao ano inicial indicado e repete
 
 import os
 # Variaveis-------------------------------------------------------------------------------------------------------------
-strPath = r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2016\12\01-pessimista-SE-medio-NE-N\vazoes'         # Caminho onde esta arquivo vazeosC base e arquivo de projecao
-strPathExport = r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2016\12\01-pessimista-SE-medio-NE-N\vazoes'   # Caminho onde de exportacao
-strNomeArquivo = r'Vazoes-2016.txt'                                       # Nome do arquivo base vazoesC
+strPath = r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\01\c5-otimista-SE-pessimista-NE-N-medio-S-otimista\vazoes'         # Caminho onde esta arquivo vazeosC base e arquivo de projecao
+strPathExport = r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\01\c5-otimista-SE-pessimista-NE-N-medio-S-otimista\vazoes'   # Caminho onde de exportacao
+strNomeArquivo = r'Vazoes-base.txt'                                       # Nome do arquivo base vazoesC
 strNomeArqvProj = r'export-2017.txt'                                      # Nome do arquivo com vazoes projecoes
 intAnoInicial = 2017                                                 # Ano a ser alterado
 # ----------------------------------------------------------------------------------------------------------------------

@@ -61,7 +61,7 @@ def fLePmoDat(strPath, strNomeArqv):
         # --------------------------------------------------------------------------------------------------------------
 
         # Captura Usinas Nao Simuladas ---------------------------------------------------------------------------------
-        if linha.strip() == 'DADOS DE GERACAO DE PEQUENAS USINAS (MWmes)':
+        if linha.strip() == 'DADOS DE GERACAO DE PEQUENAS USINAS (MWmedio)':
             contX = 0
             while contX <= 8:
 
@@ -907,15 +907,17 @@ def fEscreveDadger(strPathSource, strPathExport, strNomeArqv, vMeses, vAnos, vCo
             fileExport.write('&\n&   DADOS PARA O PROGRAMA CONFIGURADOR DO ARQUIVO DE CENARIOS DE VAZOES:\n&\n&\n&\n')
             fileExport.write('& VAZOES                              (COLUNAS: 40 A 70)\n')
             fileExport.write('& ARQ. DE VAZOES PREVISTAS - HIDROL => PREVS.RV0\n')
-            fileExport.write('& HISTORICO DE VAZOES      - HIDROL => %d VAZOESC.DAT\n' %(vAnos[0] - 2))
+            fileExport.write('& HISTORICO DE VAZOES      - HIDROL => %d VAZOES.DAT\n' %(vAnos[0] - 2))
             fileExport.write('& ARQ. DE POSTOS           - HIDROL => POSTOS.DAT\n')
-            fileExport.write('& MES INICIAL DO ESTUDO             => ' + '{:02d}'.format(vMeses[0]) + '\n')
-            fileExport.write('& MES FINAL DO ESTUDO               => ' + '{:02d}'.format(vMeses[1]) + '\n')
+            fileExport.write('& MES INICIAL DO ESTUDO             => ' + '{:02d}'.format(vMeses[0]) + '{:>7}'.format(vAnos[0]) +  '\n')
+            fileExport.write('& MES FINAL DO ESTUDO               => ' + '{:02d}'.format(vMeses[1]) + '{:>7}'.format(vAnos[1])  + '\n')
             fileExport.write('& ANO INICIAL DO ESTUDO             => ' + '{:4d}'.format(vAnos[0]) + '\n')
-            fileExport.write('& NO. SEMANAS NO MES INIC. DO ESTUDO=> ' + '{:1d}'.format(EstM1) + '\n')
+            fileExport.write('& NO. SEMANAS NO MES INIC. DO ESTUDO=> ' + '{:04d} 0000'.format(EstM1) + '\n')
             fileExport.write('& NO. DIAS DO MES 2 NA ULT. SEMANA  => ' + '{:1d}'.format(IntDiasMes2) + '\n')
             fileExport.write('& ESTRUTURA DA ARVORE               => %s\n' %(vConfigArvores))
             fileExport.write('& UTILIZA AGREGACAO                 => S\n')
+            fileExport.write('& ORDEM MAXIMA PARP                 => 11\n')
+            fileExport.write('& USA PROPAGACAO LINEAR             => 2\n')
             #-----------------------------------------------------------------------------------------------------------
 
 
