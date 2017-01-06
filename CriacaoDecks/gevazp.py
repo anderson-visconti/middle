@@ -1,17 +1,15 @@
-from multiprocessing import cpu_count
-from multiprocessing import Pool
-from functools import partial
-import os
 def worker(vetor):
     import os
     from shutil import copyfile, rmtree
     """worker function"""
+
     # Cria pasta gevazp
-    try:
+    if os.path.exists(vetor[1]) == False:
         os.makedirs(vetor[1])
-    except:
+
+    else:
         rmtree(vetor[1], ignore_errors=True)
-        os.rmdir(vetor[1])
+        os.makedirs(vetor[1])
 
     # Copia arquivos decomp para pasta gevazp
     for i in vetor[3]:
@@ -22,14 +20,13 @@ def worker(vetor):
 
     # Copia arquivos gevazp para pasta gevazp
     for i in vetor[5]:
-
         copyfile(r'{caminho}\{arquivo}'.format(caminho=vetor[2], arquivo=i),
                  r'{caminho}\{arquivo}'.format(caminho=vetor[1], arquivo=i)
                  )
 
     # Executa gevazp
     os.chdir(vetor[1])
-    os.system(vetor[2] + r'\gevazp.exe')
+    os.system('{caminho}\gevazp.exe'.format(caminho=vetor[2]))
 
     # Copia arquivo vazoes
     copyfile(r'{caminho}\{arquivo}'.format(caminho=vetor[1], arquivo=vetor[4][0]),
@@ -37,24 +34,30 @@ def worker(vetor):
              )
 
     rmtree(vetor[1], ignore_errors=True)
-    os.rmdir(vetor[1])
+
     print 'Caso: {} executado'.format(vetor[0])
     return
 
 if __name__ == '__main__':
+    from multiprocessing import cpu_count, Pool
+    from shutil import copyfile, rmtree
+    import os
     path_exec = r'C:\Gevazp'  # Caminho para executavel, arquivos base e licenca
 
     lista_arquivos = [r'dadger.rv0', r'prevs.rv0', r'vazoes.dat', r'hidr.dat', r'loss.dat', r'mlt.dat',
-                      r'postos.dat']
+                      r'postos.dat']    # Lista com arquivos do decomop
 
-    lista_gevazp = [r'arquivos.dat', r'caso.dat', r'gevazp.dat', r'modif.dat', r'regras.dat', r'rv0.txt', r'gevazp.lic']
+    lista_gevazp = [r'arquivos.dat', r'caso.dat', r'gevazp.dat', r'modif.dat',
+                    r'regras.dat', r'rv0.txt', r'gevazp.lic']   # Lista com arquivos do gevazp
 
-    arquivos_saida = ['vazoes.rv0']
+    arquivos_saida = ['vazoes.rv0'] # Arquivos de saida a serem copiados para pasta do caso
 
-    lista = [r'C:\Users\anderson.visconti\Desktop\casos\c1'
-             ]
+    lista = [r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\01\c4-otimista-SE-pessimista-NE-N-medio',
+             r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\01\c5-otimista-SE-pessimista-NE-N-medio-S-otimista'
+             ]  # Lista com caminhos dos casos
 
-    range_datas = ['201702']
+    range_datas = ['201702', '201703', '201704', '201705', '201706']    # Lista com nomes dos estagios
+
     caminhos = []
     # Cria vetor com parametros para paralelizacao
     for i in lista: # Itera sobre casos
@@ -67,10 +70,7 @@ if __name__ == '__main__':
                              lista_gevazp]
                             )
 
-    for i in caminhos[0]:
-        print i
-
+    # Paralelismo
     p = Pool(processes=cpu_count())
     result = p.map(func=worker, iterable=caminhos)
     p.close()
-    print 'Execucao gevazp concluida'
