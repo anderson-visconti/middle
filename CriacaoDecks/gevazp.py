@@ -13,14 +13,13 @@ def worker(vetor):
 
     # Copia arquivos decomp para pasta gevazp
     for i in vetor[3]:
-
         copyfile(r'{caminho}\{arquivo}'.format(caminho=vetor[0], arquivo=i),
                  r'{caminho}\{arquivo}'.format(caminho=vetor[1], arquivo=i)
                  )
 
     # Copia arquivos gevazp para pasta gevazp
     for i in vetor[5]:
-        copyfile(r'{caminho}\{arquivo}'.format(caminho=vetor[7], arquivo=i),
+        copyfile(r'{caminho}\{arquivo}'.format(caminho=vetor[2], arquivo=i),
                  r'{caminho}\{arquivo}'.format(caminho=vetor[1], arquivo=i)
                  )
 

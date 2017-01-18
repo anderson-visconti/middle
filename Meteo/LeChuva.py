@@ -11,9 +11,9 @@ import shapefile
 
 # --- variaveis --------------------------------------------------------------------------------------------------------
 path_file = r'C:\Users\anderson.visconti\Desktop\netcdf'    # caminho
-path_export = r'C:\Users\anderson.visconti\Desktop\export\2016121800'
+path_export = r'C:\Users\anderson.visconti\Desktop\export\t'
 path_shape = r'D:\Middle Office\Middle\Hidrologia\ShapeFiles\Rio_Parana'
-nome_arquivo = [ r'prate.01.2016121800.daily.nc',
+nome_arquivo = [ r'prate.01.2016091000.daily.nc',
                 ]                         # nome do arquivo
 nome_arquivo_normais = r'precip.mon.ltm_enhanced.nc'
 nomes_shape = ['Bacia6']
@@ -22,7 +22,7 @@ sub_set = {'lat': [-35, 12],
            'lon': [275, 330]
            }                                         # pontos de lat e long a serem capturados
 
-range_data = ['2017-01-21', '2017-01-28']  # range de datas para somatorio da preciptacao - limite inferior e <
+range_data = ['2017-01-01', '2017-02-01']  # range de datas para somatorio da preciptacao - limite inferior e <
 range_escala = {'inf': 0,
                 'sup': 500,
                 'step': 10
@@ -55,7 +55,7 @@ for i in range(0, len(nome_arquivo)):   # cria vetores de caminhos completos
 full_path_normais = os.path.join(path_file, nome_arquivo_normais)
 file = MFDataset(full_path)  # abre todos os arquivos
 file_normais = Dataset(full_path_normais, mode='r')                                     # abre arquivo netcdf com normais de preciptacao
-path_shape = os.path.join(path_shape, nomes_shape[0])
+#path_shape = os.path.join(path_shape, nomes_shape[0])
 # ---- Dados chuva -----------------------------------------------------------------------------------------------------
 lons = file.variables['longitude'][:]                                   # array com longitude
 lats = file.variables['latitude'][:]                                    # array com latitude
@@ -114,7 +114,7 @@ mapa = Basemap(llcrnrlon=lons_subset[0],
                projection='mill',
                lon_0=0.5 * (lons_subset[0] + lons_subset[lons_subset.size - 1]),
                lat_0=0.5 * (abs(lats_subset[0]) + abs(lats_subset[lats_subset.size - 1])),
-               resolution='f'
+               resolution='i'
                )
 
 mapa.drawcoastlines(linewidth=1.50)
@@ -144,7 +144,7 @@ mapa_anomalia = Basemap(llcrnrlon=lons_subset_normais[0],
                projection='mill',
                lon_0=0.5 * (lons_subset_normais[0] + lons_subset_normais[lons_subset_normais.size - 1]),
                lat_0=0.5 * (abs(lats_subset_normais[0]) + abs(lats_subset_normais[lats_subset_normais.size - 1])),
-               resolution='c'
+               resolution='i'
                )
 
 mapa_anomalia.drawcoastlines(linewidth=1.50)
