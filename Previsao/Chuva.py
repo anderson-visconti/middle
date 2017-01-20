@@ -45,7 +45,6 @@ def pega_chuva(path, nc_vars, coords, tempos, nomes):
     lats = file.variables[nc_vars['lat']][:]  # pega latitutes
     lons = file.variables[nc_vars['lon']][:]  # pega longitudes
 
-    print file.variables
     # indices para recortar em lat/lon
     lat_inds = np.where((lats >= coords['lat'][0]) & (lats <= coords['lat'][1]))
     lon_inds = np.where((lons >= coords['lon'][0]) & (lons <= coords['lon'][1]))
@@ -79,6 +78,8 @@ def pega_chuva(path, nc_vars, coords, tempos, nomes):
     df_24h.to_csv(r'{}\chuva-24.csv'.format(path['path_export']), sep=';', decimal=',')
     # df_tabular.to_csv(r'{}\chuva-tab.csv'.format(path_export), sep=';', decimal=',')
     print '{}: {}s'.format('Tempo total para captura dos dados de chuva', (datetime.now() - t1).total_seconds())
+    df_24h = pd.DataFrame(df_24h)
+    df_tabular = pd.DataFrame(df_tabular)
     return df_24h, df_tabular
 
 def pega_cfs(path, nc_vars, coords, tempos, nomes):
@@ -119,19 +120,8 @@ def pega_cfs(path, nc_vars, coords, tempos, nomes):
         nome_base=nomes['base'],
         extensao=nomes['extensao'])
     ]
-    print caminhos[0]
-
-    #for i in range(0, len(temp)):   # cria caminhos dos arquivos
-    #    caminhos.append('{path}\{variavel}\{year}\{nome_base}{data_form}{extensao}'.format(
-    #        path=path['path_chuva'],
-    #        variavel=nomes['variavel'],
-    #        year=temp[i].year,
-    #        nome_base=nomes['base'],
-    #        data_form=temp[i].strftime('%Y%m%d'),
-    #        extensao=nomes['extensao']))
 
     file = MFDataset(caminhos)
-    print file.variables
     lats = file.variables[nc_vars['lat']][:]  # pega latitutes
     lons = file.variables[nc_vars['lon']][:]  # pega longitudes
 
@@ -156,7 +146,6 @@ def pega_cfs(path, nc_vars, coords, tempos, nomes):
                               precip[i, j, k] * 21600.0
                               ]
                              )
-                print precip[i, j, k] * 21600.0
 
     df = pd.DataFrame(data=dados, columns=['data_3h', 'lat', 'lon', 'precip_3h'])
     df_indexado = df.set_index(['data_3h', 'lat', 'lon'])
@@ -168,8 +157,49 @@ def pega_cfs(path, nc_vars, coords, tempos, nomes):
     # monta dataframe tabular
     df_tabular = df_24h.unstack(level=[2, 1]).resample('D').sum()
     # esreve arquivos .csv
-    # df_indexado.to_csv(r'{}\chuva-3.csv'.format(path_export), sep=';', decimal=',')
     df_24h.to_csv(r'{}\projecao-24.csv'.format(path['path_export']), sep=';', decimal=',')
-    # df_tabular.to_csv(r'{}\chuva-tab.csv'.format(path_export), sep=';', decimal=',')
     print '{}: {}s'.format('Tempo total para captura dos dados de chuva', (datetime.now() - t1).total_seconds())
+    df_24h = pd.DataFrame(df_24h)
+    df_tabular = pd.DataFrame(df_tabular)
     return df_24h, df_tabular
+
+def pega_vazao(path, path_export, nome_arquivo, postos, colunas, tempos):
+    import pandas as pd
+    import os
+    import numpy as np
+
+    idx = pd.IndexSlice
+
+    df_temp = pd.read_csv(filepath_or_buffer=os.path.join(path, nome_arquivo['nome']),
+                          sep=nome_arquivo['sep'],
+                          usecols=colunas,
+                          decimal=',',
+                          dtype = {colunas[0]: object, colunas[1]: np.int, colunas[2]: np.float64}
+                          )
+
+    df_temp.rename(columns=dict(zip(colunas, ['data', 'posto', 'vazao'])), inplace=True)
+    df_temp = df_temp[df_temp['posto'].isin(postos['vazao']) |
+                      df_temp['posto'].isin(postos['montante'])
+                      ]
+
+    df_temp['data'] = pd.to_datetime(df_temp['data'])
+    df_temp.set_index(['data', 'posto'], inplace=True)
+    df_temp = df_temp.unstack(level=[1])
+    df_temp.columns = df_temp.columns.droplevel()
+    df_temp.fillna(method='ffill', axis=0, inplace=True)
+    df_temp = df_temp.loc[tempos['t_inicial'] : tempos['t_final'], :]
+
+    # Monta df Vazao propria
+    df_vazao = pd.DataFrame( df_temp.loc[:, postos['vazao'][0]])
+    df_vazao.sort_index(ascending=True, inplace=True)
+
+    # Monta df vazao montante propria
+    df_montante = pd.DataFrame(df_temp.loc[:, postos['montante']])
+    df_montante.to_csv(path_or_buf=os.path.join(path, 'df_montante_{}.csv'.format(postos['vazao'][0])),
+                       sep=nome_arquivo['sep'], decimal=','
+                       )
+
+    df_vazao.to_csv(path_or_buf=os.path.join(path, 'df_vazao_{}.csv'.format(postos['vazao'][0])),
+                    sep=nome_arquivo['sep'], decimal=','
+                    )
+    return df_vazao, df_montante
