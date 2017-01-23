@@ -31,8 +31,8 @@ path_proj = {'path_chuva': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-V
 nomes_proj = {'variavel': 'cfs', 'base': 'prate.01.2016091000', 'extensao': '.daily.nc'}
 
 nc_vars_proj = {'chuva': 'PRATE_surface',
-                'lat': 'latitude',
-                'lon': 'longitude',
+                'lat': 'lat',
+                'lon': 'lon',
                 'tempo': 'time'
                 }
 
@@ -53,27 +53,35 @@ nome_arquivo = {'nome':r'Vazoes.csv',
 
 colunas_vazoes = ['Data', 'intCodPosto', 'VazaoNatural']
 postos = {'vazao': [6],
-          'montante': [1, 2]
+          'montante': [1,2,6]
           }
 
 # Pega chuva
-df_24h, df_tabular = pega_chuva(path=path, nc_vars=nc_vars, coords=coords, tempos=tempos, nomes=nomes)
+df_24h = pega_chuva(path=path, nc_vars=nc_vars, coords=coords, tempos=tempos, nomes=nomes)
 df_24h = pd.DataFrame(df_24h)
 
 # Pega projecao
-df_24h_cfs, df_tabular_cfs = pega_cfs(path=path_proj, nc_vars=nc_vars_proj, coords=coords_proj,
+df_24h_cfs = pega_cfs(path=path_proj, nc_vars=nc_vars_proj, coords=coords_proj,
                                 tempos=tempos_proj, nomes=nomes_proj)
 df_24h_cfs = pd.DataFrame(df_24h_cfs)
 
 # Pega vazao propria e vazao montante
 df_vazao, df_montante = pega_vazao(path=path_vazoes, path_export=path_export_vazoes,
                                    nome_arquivo=nome_arquivo, postos=postos, colunas=colunas_vazoes, tempos = tempos)
-
-#df_vazao = pd.DataFrame(df_vazao)
-#df_montante = pd.DataFrame(df_montante)
+df_vazao = pd.DataFrame(df_vazao)
+df_montante = pd.DataFrame(df_montante)
 
 # Normaliza entradas das chuvas e projecoes para intervalo [0,1]
 scaler_chuva = preprocessing.MinMaxScaler()
+scaler_vazao = preprocessing.MinMaxScaler()
 df_24h['precip_24h'] = scaler_chuva.fit_transform(df_24h['precip_24h'])
 df_24h_cfs['precip_24h'] = scaler_chuva.fit_transform(df_24h_cfs['precip_24h'])
+df_vazao['vazao'] = scaler_vazao.fit_transform(df_vazao['vazao'])
+df_montante['vazao'] = scaler_vazao.fit_transform(df_montante['vazao'])
+
+print df_24h.head()
+df_24h_cfs['precip_24h'] = scaler_chuva.inverse_transform(df_24h_cfs['precip_24h'])
+print df_24h.head()
+pass
+
 

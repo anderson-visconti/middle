@@ -13,22 +13,7 @@ def pega_chuva(path, nc_vars, coords, tempos, nomes):
     from datetime import datetime
 
     t1 = datetime.now()
-    '''
-    path = {'path_chuva': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Chuva',
-            'path_export': r'C:\Users\ander\Desktop\Nova pasta'}
 
-    nomes = {'variavel': 'cmorph', 'base': 'cmorph.3hr-025deg.', 'extensao': '.nc'}
-    nc_vars = {'chuva': 'cmorph_precip',
-               'lat': 'lat',
-               'lon': 'lon',
-               'tempo': 'time'}
-
-    coords = {'lat': [-22, -20],
-              'lon': [313.4, 316]}
-
-    tempos = {'t_inicial': '2016-01-20',
-              't_final': '2016-12-13'}
-    '''
     temp = pd.date_range(start=tempos['t_inicial'], end=tempos['t_final'], freq='D', tz='UTC')
     caminhos = []
 
@@ -52,6 +37,7 @@ def pega_chuva(path, nc_vars, coords, tempos, nomes):
     # subset dos dados
     sub_lats = lats[lat_inds[0]]
     sub_lons = lons[lon_inds[0]]
+
     sub_times = num2date(file.variables[nc_vars['tempo']][:], file.variables[nc_vars['tempo']].units)
     precip = file.variables[nc_vars['chuva']][:, lat_inds[0], lon_inds[0]]
     dados = []
@@ -80,7 +66,8 @@ def pega_chuva(path, nc_vars, coords, tempos, nomes):
     print '{}: {}s'.format('Tempo total para captura dos dados de chuva', (datetime.now() - t1).total_seconds())
     df_24h = pd.DataFrame(df_24h)
     df_tabular = pd.DataFrame(df_tabular)
-    return df_24h, df_tabular
+    return df_tabular
+
 
 def pega_cfs(path, nc_vars, coords, tempos, nomes):
     '''
@@ -97,22 +84,6 @@ def pega_cfs(path, nc_vars, coords, tempos, nomes):
     from datetime import datetime
 
     t1 = datetime.now()
-    '''
-    path = {'path_chuva': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Chuva',
-            'path_export': r'C:\Users\ander\Desktop\Nova pasta'}
-
-    nomes = {'variavel': 'cmorph', 'base': 'cmorph.3hr-025deg.', 'extensao': '.nc'}
-    nc_vars = {'chuva': 'cmorph_precip',
-               'lat': 'lat',
-               'lon': 'lon',
-               'tempo': 'time'}
-
-    coords = {'lat': [-22, -20],
-              'lon': [313.4, 316]}
-
-    tempos = {'t_inicial': '2016-01-20',
-              't_final': '2016-12-13'}
-    '''
     temp = pd.date_range(start=tempos['t_inicial'], end=tempos['t_final'], freq='D', tz='UTC')
     caminhos = ['{path}\{variavel}\{nome_base}{extensao}'.format(
         path=path['path_chuva'],
@@ -125,7 +96,6 @@ def pega_cfs(path, nc_vars, coords, tempos, nomes):
     lats = file.variables[nc_vars['lat']][:]  # pega latitutes
     lons = file.variables[nc_vars['lon']][:]  # pega longitudes
 
-
     # indices para recortar em lat/lon
     lat_inds = np.where((lats >= coords['lat'][0]) & (lats <= coords['lat'][1]))
     lon_inds = np.where((lons >= coords['lon'][0]) & (lons <= coords['lon'][1]))
@@ -133,6 +103,7 @@ def pega_cfs(path, nc_vars, coords, tempos, nomes):
     # subset dos dados
     sub_lats = lats[lat_inds[0]]
     sub_lons = lons[lon_inds[0]]
+
     sub_times = num2date(file.variables[nc_vars['tempo']][:], file.variables[nc_vars['tempo']].units)
     precip = file.variables[nc_vars['chuva']][:, lat_inds[0], lon_inds[0]]
     dados = []
@@ -151,6 +122,7 @@ def pega_cfs(path, nc_vars, coords, tempos, nomes):
     df_indexado = df.set_index(['data_3h', 'lat', 'lon'])
     # calcula chuva acumulada em 24 h
     df_24h = df_indexado.unstack(level=[2, 1]).resample('D').sum().stack(level=[2, 1])
+
     # renomeia colunas
     df_24h.index = df_24h.index.set_names('data', level=0)
     df_24h.rename(columns={'precip_3h': 'precip_24h'}, inplace=True)
@@ -161,7 +133,8 @@ def pega_cfs(path, nc_vars, coords, tempos, nomes):
     print '{}: {}s'.format('Tempo total para captura dos dados de chuva', (datetime.now() - t1).total_seconds())
     df_24h = pd.DataFrame(df_24h)
     df_tabular = pd.DataFrame(df_tabular)
-    return df_24h, df_tabular
+    return df_tabular
+
 
 def pega_vazao(path, path_export, nome_arquivo, postos, colunas, tempos):
     import pandas as pd
@@ -185,16 +158,15 @@ def pega_vazao(path, path_export, nome_arquivo, postos, colunas, tempos):
     df_temp['data'] = pd.to_datetime(df_temp['data'])
     df_temp.set_index(['data', 'posto'], inplace=True)
     df_temp = df_temp.unstack(level=[1])
-    df_temp.columns = df_temp.columns.droplevel()
     df_temp.fillna(method='ffill', axis=0, inplace=True)
     df_temp = df_temp.loc[tempos['t_inicial'] : tempos['t_final'], :]
 
     # Monta df Vazao propria
-    df_vazao = pd.DataFrame( df_temp.loc[:, postos['vazao'][0]])
+    df_vazao = pd.DataFrame(df_temp.loc[:, ('vazao',postos['vazao'][0])])
     df_vazao.sort_index(ascending=True, inplace=True)
 
     # Monta df vazao montante propria
-    df_montante = pd.DataFrame(df_temp.loc[:, postos['montante']])
+    df_montante = pd.DataFrame(df_temp.loc[:, zip(['vazao'] * len(postos['montante']), postos['montante'])])
     df_montante.to_csv(path_or_buf=os.path.join(path, 'df_montante_{}.csv'.format(postos['vazao'][0])),
                        sep=nome_arquivo['sep'], decimal=','
                        )
@@ -203,3 +175,4 @@ def pega_vazao(path, path_export, nome_arquivo, postos, colunas, tempos):
                     sep=nome_arquivo['sep'], decimal=','
                     )
     return df_vazao, df_montante
+
