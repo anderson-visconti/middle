@@ -20,7 +20,7 @@ coords = {'lat': [-22.0, -20.0],
           'lon': [313.4, 316.0]
           }
 
-tempos = {'t_inicial': '2016-12-10',
+tempos = {'t_inicial': '2016-01-01',
           't_final': '2016-12-13'
           }
 # Variaveis chuva projetada
@@ -55,6 +55,10 @@ colunas_vazoes = ['Data', 'intCodPosto', 'VazaoNatural']
 postos = {'vazao': [6],
           'montante': [1,2,6]
           }
+lags = {'vazao': [1],
+        'chuva': [0, 1],
+        'montante':[0, 1]
+        }
 
 # Pega chuva
 df_24h = pega_chuva(path=path, nc_vars=nc_vars, coords=coords, tempos=tempos, nomes=nomes)
@@ -71,17 +75,38 @@ df_vazao, df_montante = pega_vazao(path=path_vazoes, path_export=path_export_vaz
 df_vazao = pd.DataFrame(df_vazao)
 df_montante = pd.DataFrame(df_montante)
 
-# Normaliza entradas das chuvas e projecoes para intervalo [0,1]
-scaler_chuva = preprocessing.MinMaxScaler()
+# Normaliza dados
 scaler_vazao = preprocessing.MinMaxScaler()
-df_24h['precip_24h'] = scaler_chuva.fit_transform(df_24h['precip_24h'])
-df_24h_cfs['precip_24h'] = scaler_chuva.fit_transform(df_24h_cfs['precip_24h'])
-df_vazao['vazao'] = scaler_vazao.fit_transform(df_vazao['vazao'])
-df_montante['vazao'] = scaler_vazao.fit_transform(df_montante['vazao'])
+scaler_chuva = preprocessing.MinMaxScaler()
+scaler_montante = preprocessing.MinMaxScaler()
 
-print df_24h.head()
-df_24h_cfs['precip_24h'] = scaler_chuva.inverse_transform(df_24h_cfs['precip_24h'])
-print df_24h.head()
+df_vazao = pd.DataFrame(data=scaler_vazao.fit_transform(df_vazao), index=df_vazao.index,
+                        columns=df_vazao.columns)
+df_24h = pd.DataFrame(data=scaler_chuva.fit_transform(df_24h), index=df_24h.index,
+                      columns=df_24h.columns)
+df_24h_cfs = pd.DataFrame(data=scaler_chuva.transform(df_24h_cfs), index=df_24h_cfs.index,
+                          columns=df_24h_cfs.columns)
+df_montante = pd.DataFrame(data=scaler_montante.fit_transform(df_montante), index=df_montante.index,
+                           columns=df_montante.columns)
+
+# Cria lags
+df_vazao_lag, df_24H_lag, df_montante_lag = cria_lags(df_vazao, df_24h, df_montante, lags=lags)
+
+# Cria dataframe de entradas
+df_entradas = pd.DataFrame(index=pd.date_range(start=tempos['t_inicial'], end=tempos['t_final'], freq='D'))
+for i in df_vazao_lag:
+    print i
+    df_entradas['{}'.format(i)] = df_vazao_lag.loc[:, i]
+
+for i in df_24H_lag:
+    df_entradas['{}'.format(i)] = df_24H_lag.loc[:, i]
+
+for i in df_montante_lag:
+    df_entradas['{}'.format(i)] = df_montante_lag.loc[:, i]
+
+df_entradas.dropna(inplace=True)
+
+
 pass
 
 

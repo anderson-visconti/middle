@@ -162,11 +162,12 @@ def pega_vazao(path, path_export, nome_arquivo, postos, colunas, tempos):
     df_temp = df_temp.loc[tempos['t_inicial'] : tempos['t_final'], :]
 
     # Monta df Vazao propria
-    df_vazao = pd.DataFrame(df_temp.loc[:, ('vazao',postos['vazao'][0])])
+    df_vazao = pd.DataFrame(df_temp.loc[:, ('vazao', postos['vazao'][0])])
     df_vazao.sort_index(ascending=True, inplace=True)
 
     # Monta df vazao montante propria
     df_montante = pd.DataFrame(df_temp.loc[:, zip(['vazao'] * len(postos['montante']), postos['montante'])])
+    df_montante.columns = df_montante.columns.set_levels(['vazao_montante'], level=0)
     df_montante.to_csv(path_or_buf=os.path.join(path, 'df_montante_{}.csv'.format(postos['vazao'][0])),
                        sep=nome_arquivo['sep'], decimal=','
                        )
@@ -175,4 +176,41 @@ def pega_vazao(path, path_export, nome_arquivo, postos, colunas, tempos):
                     sep=nome_arquivo['sep'], decimal=','
                     )
     return df_vazao, df_montante
+
+
+def cria_lags(df_vazao, df_24h, df_montante, lags):
+    import pandas as pd
+
+    df_vazao_lag = pd.DataFrame(index=df_vazao.index)
+    df_chuva_lag = pd.DataFrame(index=df_24h.index)
+    df_montante_lag = pd.DataFrame(index=df_montante.index)
+
+    for i in df_vazao.columns:
+        for j in lags['vazao']:
+            df_vazao_lag = pd.concat(objs=[df_vazao_lag,
+                                           pd.Series(df_vazao[i].shift(periods=j),name='{}_{}_{}_{}'.format(
+                                               i[0], i[1], 'lag', j)
+                                                     )
+                                           ],
+                                     axis=1)
+
+    for i in df_24h.columns:
+        for j in lags['chuva']:
+            df_chuva_lag = pd.concat(objs=[df_chuva_lag,
+                                           pd.Series(df_24h[i].shift(periods=j),name='{}_{}_{}_{}_{}'.format(
+                                               i[0], i[1], i[2], 'lag', j)
+                                                     )
+                                           ],
+                                     axis=1)
+
+    for i in df_montante.columns:
+        for j in lags['chuva']:
+            df_montante_lag = pd.concat(objs=[df_montante_lag,
+                                           pd.Series(df_montante[i].shift(periods=j),name='{}_{}_{}_{}'.format(
+                                               i[0], i[1], 'lag', j)
+                                                     )
+                                           ],
+                                     axis=1)
+
+    return df_vazao_lag, df_chuva_lag, df_montante_lag
 
