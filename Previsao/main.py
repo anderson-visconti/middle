@@ -3,6 +3,7 @@ from Chuva import *
 from sklearn import preprocessing
 import numpy as np
 import pandas as pd
+from itertools import chain
 
 # Variaveis de chuva observada
 path = {'path_chuva': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Chuva',
@@ -23,12 +24,16 @@ coords = {'lat': [-22.0, -20.0],
 tempos = {'t_inicial': '2016-01-01',
           't_final': '2016-12-13'
           }
+
 # Variaveis chuva projetada
 path_proj = {'path_chuva': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Chuva',
              'path_export': r'C:\Users\anderson.visconti\Desktop\Projecao'
              }
 
-nomes_proj = {'variavel': 'cfs', 'base': 'prate.01.2016091000', 'extensao': '.daily.nc'}
+nomes_proj = {'variavel': 'cfs',
+              'base': 'prate.01.2016091000',
+              'extensao': '.daily.nc'
+              }
 
 nc_vars_proj = {'chuva': 'PRATE_surface',
                 'lat': 'lat',
@@ -47,17 +52,17 @@ tempos_proj = {'t_inicial': '2016-12-14',
 # Dados de Vazao
 path_vazoes = r'C:\Users\anderson.visconti\Desktop'
 path_export_vazoes = r'C:\Users\anderson.visconti\Desktop'
-nome_arquivo = {'nome':r'Vazoes.csv',
-                'sep':';'
+nome_arquivo = {'nome': r'Vazoes.csv',
+                'sep': ';'
                 }
 
 colunas_vazoes = ['Data', 'intCodPosto', 'VazaoNatural']
 postos = {'vazao': [6],
-          'montante': [1,2,6]
+          'montante': [1, 2, 6]
           }
-lags = {'vazao': [1],
-        'chuva': [0, 1],
-        'montante':[0, 1]
+lags = {'vazao': [1, 2, 3, 4],
+        'chuva': [0, 1, 2, 3, 4],
+        'montante': [0, 1, 2, 3, 4, 5]
         }
 
 # Pega chuva
@@ -66,7 +71,7 @@ df_24h = pd.DataFrame(df_24h)
 
 # Pega projecao
 df_24h_cfs = pega_cfs(path=path_proj, nc_vars=nc_vars_proj, coords=coords_proj,
-                                tempos=tempos_proj, nomes=nomes_proj)
+                      tempos=tempos_proj, nomes=nomes_proj)
 df_24h_cfs = pd.DataFrame(df_24h_cfs)
 
 # Pega vazao propria e vazao montante
@@ -95,7 +100,6 @@ df_vazao_lag, df_24H_lag, df_montante_lag = cria_lags(df_vazao, df_24h, df_monta
 # Cria dataframe de entradas
 df_entradas = pd.DataFrame(index=pd.date_range(start=tempos['t_inicial'], end=tempos['t_final'], freq='D'))
 for i in df_vazao_lag:
-    print i
     df_entradas['{}'.format(i)] = df_vazao_lag.loc[:, i]
 
 for i in df_24H_lag:
@@ -106,7 +110,9 @@ for i in df_montante_lag:
 
 df_entradas.dropna(inplace=True)
 
+# Cria lags saidas
+df_saidas =pd.DataFrame(df_vazao.loc[:, 'vazao'].shift(max(chain(lags['vazao'], lags['montante'], lags['chuva'])))
+                        ).dropna()
 
-pass
 
 

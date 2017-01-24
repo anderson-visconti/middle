@@ -204,7 +204,7 @@ def cria_lags(df_vazao, df_24h, df_montante, lags):
                                      axis=1)
 
     for i in df_montante.columns:
-        for j in lags['chuva']:
+        for j in lags['montante']:
             df_montante_lag = pd.concat(objs=[df_montante_lag,
                                            pd.Series(df_montante[i].shift(periods=j),name='{}_{}_{}_{}'.format(
                                                i[0], i[1], 'lag', j)
