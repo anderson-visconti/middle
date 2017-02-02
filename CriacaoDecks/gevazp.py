@@ -46,18 +46,21 @@ if __name__ == '__main__':
     nome_executavel = 'gevazp.exe'  # Nome do executavel do gevazp
 
     lista_arquivos = [r'dadger.rv0', r'prevs.rv0', r'vazoes.dat', r'hidr.dat', r'loss.dat', r'mlt.dat',
-                      r'postos.dat']    # Lista com arquivos do decomop
+                      ]    # Lista com arquivos do decomop
 
     lista_gevazp = [r'arquivos.dat', r'caso.dat', r'gevazp.dat', r'modif.dat',
-                    r'regras.dat', r'rv0.txt', r'gevazp.lic']   # Lista com arquivos do gevazp
+                    r'regras.dat', r'rv0.txt', r'gevazp.lic', r'postos.dat'
+                    ]   # Lista com arquivos do gevazp
 
     arquivos_saida = ['vazoes.rv0'] # Arquivos de saida a serem copiados para pasta do caso
 
-    lista = [r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\01\c4-otimista-SE-pessimista-NE-N-medio',
-             r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\01\c5-otimista-SE-pessimista-NE-N-medio-S-otimista'
+    lista = [r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\02\01-critico-partida-pessimista',
+             r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\02\03-medio-partida-pessimista',
+             r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\02\05-critico-partida-media',
+             r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\02\06-medio-partida-media',
              ]  # Lista com caminhos dos casos
 
-    range_datas = ['201702', '201703', '201704', '201705', '201706']    # Lista com nomes dos estagios
+    range_datas = ['201703', '201704']    # Lista com nomes dos estagios
 
     caminhos = []
     # Cria vetor com parametros para paralelizacao

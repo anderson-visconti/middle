@@ -11,9 +11,9 @@ import shapefile
 
 # --- variaveis --------------------------------------------------------------------------------------------------------
 path_file = r'C:\Users\anderson.visconti\Desktop\netcdf'    # caminho
-path_export = r'C:\Users\anderson.visconti\Desktop\export\2017011900'
+path_export = r'C:\Users\anderson.visconti\Desktop\export\2017013100'
 path_shape = r'D:\Middle Office\Middle\Hidrologia\ShapeFiles\Rio_Parana'
-nome_arquivo = [ r'prate.02.2017011900.daily.nc',
+nome_arquivo = [ r'prate.02.2017013100.daily.nc',
                 ]                         # nome do arquivo
 nome_arquivo_normais = r'precip.mon.ltm_enhanced.nc'
 nomes_shape = ['Bacia6']

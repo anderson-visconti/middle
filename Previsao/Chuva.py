@@ -178,39 +178,127 @@ def pega_vazao(path, path_export, nome_arquivo, postos, colunas, tempos):
     return df_vazao, df_montante
 
 
-def cria_lags(df_vazao, df_24h, df_montante, lags):
+def cria_lags(df_vazao, df_24h, df_montante, lags, limites_lags, postos):
     import pandas as pd
+    import numpy as np
 
     df_vazao_lag = pd.DataFrame(index=df_vazao.index)
     df_chuva_lag = pd.DataFrame(index=df_24h.index)
     df_montante_lag = pd.DataFrame(index=df_montante.index)
 
+
+    lags_vazao = pd.DataFrame(lags['vazao'])
+    lags_chuva = pd.DataFrame(lags['chuva'])
+    lags_montante = pd.DataFrame(lags['montante'])
+    maior = []
+    #(lags_vazao['vazao_{}'.format(postos['vazao'][0])] >= limites_lags['vazao'][0])
+    temp = lags_vazao[(lags_vazao['lags'] < 0) &
+                      (lags_vazao['vazao_{}'.format(postos['vazao'][0])] >= limites_lags['vazao'][0])
+    ]
+
+    maior.append(max(temp.loc[:, 'lags'] * -1))
     for i in df_vazao.columns:
-        for j in lags['vazao']:
+        for j in temp['lags']:
             df_vazao_lag = pd.concat(objs=[df_vazao_lag,
-                                           pd.Series(df_vazao[i].shift(periods=j),name='{}_{}_{}_{}'.format(
-                                               i[0], i[1], 'lag', j)
+                                           pd.Series(df_vazao[i].shift(periods=-j),name='{}_{}_{}_{}'.format(
+                                               i[0], i[1], 'lag', -j)
                                                      )
                                            ],
                                      axis=1)
 
+    temp = lags_chuva[(lags_chuva.iloc[:, 1:] >= limites_lags['chuva'][0]) &
+                      (lags_chuva.iloc[:, 1:] <= limites_lags['chuva'][1])
+    ]
+
+    maior.append(0)
     for i in df_24h.columns:
-        for j in lags['chuva']:
-            df_chuva_lag = pd.concat(objs=[df_chuva_lag,
-                                           pd.Series(df_24h[i].shift(periods=j),name='{}_{}_{}_{}_{}'.format(
-                                               i[0], i[1], i[2], 'lag', j)
-                                                     )
-                                           ],
-                                     axis=1)
+        for j in list(temp.index.values):
+            if np.isnan(temp.loc[j, '{}_{}'.format(i[1], i[2])]) != True:
+                if -j > maior[1]:
+                    maior[1] = -j
+
+                df_chuva_lag = pd.concat(objs=[df_chuva_lag,
+                                               pd.Series(df_24h[i].shift(periods=-j), name='{}_{}_{}_{}_{}'.format(
+                                                   i[0], i[1], i[2], 'lag', -j)
+                                                         )
+                                               ],
+                                         axis=1)
+
+    temp = lags_montante[(lags_montante.iloc[:, 1:] >= limites_lags['montante'][0]) &
+                     (lags_montante.iloc[:, 1:] <= limites_lags['montante'][1])
+    ]
+
+    maior.append(0)
+    for i in df_montante.columns:
+        for j in list(temp.index.values):
+            if np.isnan(temp.loc[j, '{}_{}'.format(i[0], i[1])]) != True:
+                print -j
+                if -j > maior[2]:
+                    maior[2] = -j
+
+                df_montante_lag = pd.concat(objs=[df_montante_lag,
+                                               pd.Series(df_montante[i].shift(periods=-j),name='{}_{}_{}_{}'.format(
+                                                   i[0], i[1], 'lag', -j)
+                                                         )
+                                               ],
+                                         axis=1)
+
+    return df_vazao_lag, df_chuva_lag, df_montante_lag, maior
+
+def define_lags(df_vazao, df_24h, df_montante, limites_lags, postos):
+    from sklearn import preprocessing
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import itertools
+
+
+    colors = itertools.cycle(["r", "b", "g"])
+    df_vazao_norm = preprocessing.normalize(df_vazao.loc[:, ('vazao', postos['vazao'][0])].reshape(1, -1))[0]
+    x = np.arange(-34, 1, 1)
+    chuva_corr = pd.DataFrame(index=x, data=x, columns=['lags'])
+    montante_corr = pd.DataFrame(index=x, data=x, columns=['lags'])
+    vazao_corr = pd.DataFrame(index=x, data=x, columns=['lags'])
+
+    plt.figure(1)
+    for i in df_24h.columns:
+        chuva_norm = preprocessing.normalize(df_24h.loc[:, i].reshape(1, -1))[0]
+        xcorr = np.correlate(df_vazao_norm, chuva_norm, mode='full')[df_24h.shape[0] - 35 : df_24h.shape[0]]
+        chuva_corr['{}_{}'.format(i[1], i[2])] = xcorr
+        plt.scatter(x, xcorr, color=next(colors), label='{}_{}'.format(i[1], i[2]))
+
+    plt.plot(x, np.ones(len(x)) * limites_lags['chuva'][0])
+    plt.grid(True)
+
+    plt.figure(2)
 
     for i in df_montante.columns:
-        for j in lags['montante']:
-            df_montante_lag = pd.concat(objs=[df_montante_lag,
-                                           pd.Series(df_montante[i].shift(periods=j),name='{}_{}_{}_{}'.format(
-                                               i[0], i[1], 'lag', j)
-                                                     )
-                                           ],
-                                     axis=1)
+        montante_norm = preprocessing.normalize(df_montante.loc[:, i].reshape(1, -1))[0]
+        xcorr = np.correlate(df_vazao_norm, montante_norm, mode='full')[df_montante.shape[0] - 35: df_montante.shape[0]]
+        montante_corr['{}_{}'.format(i[0], i[1])] = xcorr
+        plt.scatter(x, xcorr, color=next(colors), label='{}_{}'.format(i[0], i[1]))
 
-    return df_vazao_lag, df_chuva_lag, df_montante_lag
+
+
+
+    plt.plot(x, np.ones(len(x)) * limites_lags['montante'][0], color=next(colors))
+    plt.grid(True)
+    plt.legend(loc='lower left')
+
+    plt.figure(3)
+    xcorr = np.correlate(df_vazao_norm, df_vazao_norm, mode='full')[df_vazao_norm.shape[0] - 35: df_vazao_norm.shape[0]]
+    vazao_corr['{}_{}'.format('vazao', postos['vazao'][0])] = xcorr
+    plt.scatter(x, xcorr, color=next(colors), label='{}_{}'.format('vazao', postos['vazao'][0]))
+    plt.plot(x, np.ones(len(x)) * limites_lags['vazao'][0], color=next(colors))
+    plt.grid(True)
+    plt.legend(loc='lower left')
+
+    #plt.show()
+
+    lags = {'vazao': vazao_corr,
+            'montante': montante_corr,
+            'chuva': chuva_corr
+            }
+
+    return lags
 
