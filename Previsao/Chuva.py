@@ -133,6 +133,7 @@ def pega_cfs(path, nc_vars, coords, tempos, nomes):
     print '{}: {}s'.format('Tempo total para captura dos dados de chuva', (datetime.now() - t1).total_seconds())
     df_24h = pd.DataFrame(df_24h)
     df_tabular = pd.DataFrame(df_tabular)
+    df_tabular = df_tabular[tempos['t_inicial']: tempos['t_final']]
     return df_tabular
 
 
@@ -140,8 +141,6 @@ def pega_vazao(path, path_export, nome_arquivo, postos, colunas, tempos):
     import pandas as pd
     import os
     import numpy as np
-
-    idx = pd.IndexSlice
 
     df_temp = pd.read_csv(filepath_or_buffer=os.path.join(path, nome_arquivo['nome']),
                           sep=nome_arquivo['sep'],
@@ -155,14 +154,16 @@ def pega_vazao(path, path_export, nome_arquivo, postos, colunas, tempos):
                       df_temp['posto'].isin(postos['montante'])
                       ]
 
-    df_temp['data'] = pd.to_datetime(df_temp['data'])
+    df_temp['data'] = pd.to_datetime(df_temp['data'], format='%d/%m/%Y')
     df_temp.set_index(['data', 'posto'], inplace=True)
+    df_temp.sort_index(level=[0, 1], ascending=True, inplace=True)
     df_temp = df_temp.unstack(level=[1])
     df_temp.fillna(method='ffill', axis=0, inplace=True)
     df_temp = df_temp.loc[tempos['t_inicial'] : tempos['t_final'], :]
 
     # Monta df Vazao propria
     df_vazao = pd.DataFrame(df_temp.loc[:, ('vazao', postos['vazao'][0])])
+    df_vazao.fillna(method='ffill', axis=0, inplace=True)
     df_vazao.sort_index(ascending=True, inplace=True)
 
     # Monta df vazao montante propria
@@ -232,7 +233,6 @@ def cria_lags(df_vazao, df_24h, df_montante, lags, limites_lags, postos):
     for i in df_montante.columns:
         for j in list(temp.index.values):
             if np.isnan(temp.loc[j, '{}_{}'.format(i[0], i[1])]) != True:
-                print -j
                 if -j > maior[2]:
                     maior[2] = -j
 
@@ -277,9 +277,6 @@ def define_lags(df_vazao, df_24h, df_montante, limites_lags, postos):
         xcorr = np.correlate(df_vazao_norm, montante_norm, mode='full')[df_montante.shape[0] - 35: df_montante.shape[0]]
         montante_corr['{}_{}'.format(i[0], i[1])] = xcorr
         plt.scatter(x, xcorr, color=next(colors), label='{}_{}'.format(i[0], i[1]))
-
-
-
 
     plt.plot(x, np.ones(len(x)) * limites_lags['montante'][0], color=next(colors))
     plt.grid(True)
