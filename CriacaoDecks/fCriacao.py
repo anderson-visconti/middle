@@ -87,6 +87,7 @@ def fLePmoDat(strPath, strNomeArqv):
                     aux[2] = ['SUDESTE', 'SUL', 'NORDESTE', 'NORTE'].index(aux[2]) + 1  # transforma nome do subsistema em numero
                     vConfigTerm.append(aux)
 
+
                 linha = filePMO.readline()
         # --------------------------------------------------------------------------------------------------------------
 

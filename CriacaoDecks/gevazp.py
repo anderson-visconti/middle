@@ -13,7 +13,6 @@ def worker(vetor):
 
     # Copia arquivos decomp para pasta gevazp
     for i in vetor[3]:
-
         copyfile(r'{caminho}\{arquivo}'.format(caminho=vetor[0], arquivo=i),
                  r'{caminho}\{arquivo}'.format(caminho=vetor[1], arquivo=i)
                  )
@@ -26,7 +25,7 @@ def worker(vetor):
 
     # Executa gevazp
     os.chdir(vetor[1])
-    os.system('{caminho}\gevazp.exe'.format(caminho=vetor[2]))
+    os.system('{caminho}\{executavel}'.format(caminho=vetor[6], executavel=vetor[7]))
 
     # Copia arquivo vazoes
     copyfile(r'{caminho}\{arquivo}'.format(caminho=vetor[1], arquivo=vetor[4][0]),
@@ -42,21 +41,26 @@ if __name__ == '__main__':
     from multiprocessing import cpu_count, Pool
     from shutil import copyfile, rmtree
     import os
-    path_exec = r'C:\Gevazp'  # Caminho para executavel, arquivos base e licenca
+    path_exec = r'C:\Gevazp'  # Caminho para executavel gevazp
+    path_gevazp = r'C:\Gevazp'  # Caminho para arruivos gevavazp e licenca
+    nome_executavel = 'gevazp.exe'  # Nome do executavel do gevazp
 
     lista_arquivos = [r'dadger.rv0', r'prevs.rv0', r'vazoes.dat', r'hidr.dat', r'loss.dat', r'mlt.dat',
-                      r'postos.dat']    # Lista com arquivos do decomop
+                      ]    # Lista com arquivos do decomop
 
     lista_gevazp = [r'arquivos.dat', r'caso.dat', r'gevazp.dat', r'modif.dat',
-                    r'regras.dat', r'rv0.txt', r'gevazp.lic']   # Lista com arquivos do gevazp
+                    r'regras.dat', r'rv0.txt', r'gevazp.lic', r'postos.dat'
+                    ]   # Lista com arquivos do gevazp
 
     arquivos_saida = ['vazoes.rv0'] # Arquivos de saida a serem copiados para pasta do caso
 
-    lista = [r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\01\c4-otimista-SE-pessimista-NE-N-medio',
-             r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\01\c5-otimista-SE-pessimista-NE-N-medio-S-otimista'
+    lista = [r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\02\01-critico-partida-pessimista',
+             r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\02\03-medio-partida-pessimista',
+             r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\02\05-critico-partida-media',
+             r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\02\06-medio-partida-media',
              ]  # Lista com caminhos dos casos
 
-    range_datas = ['201702', '201703', '201704', '201705', '201706']    # Lista com nomes dos estagios
+    range_datas = ['201703', '201704']    # Lista com nomes dos estagios
 
     caminhos = []
     # Cria vetor com parametros para paralelizacao
@@ -67,7 +71,9 @@ if __name__ == '__main__':
                              path_exec,
                              lista_arquivos,
                              arquivos_saida,
-                             lista_gevazp]
+                             lista_gevazp,
+                             path_gevazp,
+                             nome_executavel]
                             )
 
     # Paralelismo

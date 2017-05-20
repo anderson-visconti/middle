@@ -8,8 +8,8 @@ O script acrescenta 1 ano apenas para facilitar ao ano inicial indicado e repete
 
 import os
 # Variaveis-------------------------------------------------------------------------------------------------------------
-strPath = r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\01\c5-otimista-SE-pessimista-NE-N-medio-S-otimista\vazoes'         # Caminho onde esta arquivo vazeosC base e arquivo de projecao
-strPathExport = r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\01\c5-otimista-SE-pessimista-NE-N-medio-S-otimista\vazoes'   # Caminho onde de exportacao
+strPath = r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\02\06-medio-partida-media\vazoes'         # Caminho onde esta arquivo vazeosC base e arquivo de projecao
+strPathExport = r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2017\02\06-medio-partida-media\vazoes'   # Caminho onde de exportacao
 strNomeArquivo = r'Vazoes-base.txt'                                       # Nome do arquivo base vazoesC
 strNomeArqvProj = r'export-2017.txt'                                      # Nome do arquivo com vazoes projecoes
 intAnoInicial = 2017                                                 # Ano a ser alterado
@@ -24,10 +24,10 @@ file = open(os.path.join(strPath, strNomeArqvProj))
 for linha in file:
     aux = linha.split(';')
 
-    for i in range(0,len(aux)):
+    for i in range(0, len(aux)):
         aux[i] = aux[i].strip() # Tira espacos em branco do vetor de string
 
-    for i in range(2,len(aux)):
+    for i in range(2, len(aux)):
         aux[i] = aux[i][:-3]
 
     vProjecoes.append(aux)
