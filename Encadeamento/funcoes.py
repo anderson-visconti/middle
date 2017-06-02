@@ -128,6 +128,9 @@ def fEscreveDadger(Path, NomeArqv, vUH):
         if linha.strip()[0:2] == 'UH':  # Escrita Bloco UH
             aux = (' '.join(linha.split())).split(' ')
 
+            if len(aux) == 4:
+                aux.append('1')
+
             posto = linha[4:8].strip()
 
             for i in range(0,len(vUH)): # Procura novo armazenamento
