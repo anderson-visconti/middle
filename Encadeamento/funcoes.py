@@ -80,7 +80,13 @@ def fLeRelato(FullPath):
         # --------------------------------------------------------------------------------------------------------------
 
         # -------------Leitura dos armazenamentos da ultima semana -----------------------------------------------------
-        if linha[15:24].strip() == 'SEMANA %s' %(numEstagios) and f == 0:
+        #if linha.strip() == 'RELATORIO  DA  OPERACAO':
+        #    x = 1
+        #    for i in range(3):
+        #        linha = file.readline()
+        #        print linha[26:37]
+
+        if linha[26:37].strip() == 'ESTAGIO  %s' %(numEstagios) and f == 0:
             count = 0
             while count < 3:    # entre 2 X e 3 ficam os dados
                 aux = file.readline()
@@ -101,7 +107,7 @@ def fLeRelato(FullPath):
             vArm = vArm[:-4]    # retira 4 ultimas linhas (estacoes elevatorias)
         # --------------------------------------------------------------------------------------------------------------
     print('Cadastro dos postos e armazenamtos para o final do mes capturados (Estagio %s)' %(numEstagios))
-    return vCadastro,vArm;
+    return vCadastro, vArm;
 
 def fEscreveDadger(Path, NomeArqv, vUH):
 
@@ -125,10 +131,13 @@ def fEscreveDadger(Path, NomeArqv, vUH):
             posto = linha[4:8].strip()
 
             for i in range(0,len(vUH)): # Procura novo armazenamento
-
                 if vUH[i][0] == int(float(posto)):
                     aux[3] = float(vUH[i][2])
                     break
+
+                else:
+                    aux[3] = float(aux[3])
+
 
             NewFile.write('{0:>2}  {1:>3}  {2:>2}       {3:6.2f}               {4:>1}\n'.format(*aux))
 
@@ -209,11 +218,17 @@ def fEscreveConfhd(Path, vUH, vCadastro):
             nome = linha[6:19].strip()
             posto = int(float(linha[19:24].strip()))
             fator = 1.0
+            #arm = float(linha[36:41].strip())
+
+            if posto == 227:
+                arm = float(linha[36:41].strip())
+                pass
 
             if nome[0:4] == 'FICT':
 
                 if usina == 291:    # serra da mesa ficticia 0.55 do valor de serra da mesa
                     fator = 0.55
+
 
                 for i in range(0,len(vCadastro)):   # procura pela usina original para substituicao
 
@@ -221,12 +236,18 @@ def fEscreveConfhd(Path, vUH, vCadastro):
                         usina = int(float(vCadastro[i][0]))
                         break
 
+
             for i in range(0,len(vUH)):
 
                 if usina == vUH[i][0]:
                     arm = '{0:6.2f}'.format(vUH[i][2] * fator)
                     NovaLinha = linha.replace(linha[35:41],arm)
                     break
+                else:
+                    arm = float(linha[36:41].strip())
+                    arm = '{0:6.2f}'.format(arm)
+                    NovaLinha = linha.replace(linha[35:41], arm)
+
 
         NewFile.writelines(NovaLinha)
 
@@ -467,19 +488,22 @@ def fEnviaEmail(cenarios, listaMes, PathL1, lista_email):
 def fResultadosDecomp(strPath, cenarios, listaMes, vResultados, vArmazenamentos):
 
     import os
-    cont = 0
 
     #vResultados = []
     arm_final = vArmazenamentos
     cont_subsistema = 1
+    cont_precos = 1
+    cont = 1
+    flag = 0
     # Leitura dados decomp -------------------------------------------------------------------------------------------------
     strPathDecomp = os.path.join ((os.path.join(strPath,'decomp')), 'relato.rv0') #(os.path.join(strPath,'decomp'))
+    print strPathDecomp
     fileDecomp = open(strPathDecomp,'r')
     #fileExportDecomp = open(os.path.join(strPath,'custo.txt'),'w')
     for linha in fileDecomp:
 
-        if linha.find('SEMANA {0:d}'.format(cont + 1)) != -1:
-            cont = cont + 1
+        #if linha.find('SEMANA {0:d}'.format(cont + 1)) != -1:
+        #    cont = cont + 1
 
         if linha.find('Custo marginal de operacao do subsistema') != -1:
             vResultados.append([cenarios,
@@ -488,6 +512,11 @@ def fResultadosDecomp(strPath, cenarios, listaMes, vResultados, vArmazenamentos)
                                linha[44:46].strip(),
                                linha[47:69].strip()]
                                )
+            cont_precos = cont_precos + 1
+
+        if cont_precos > 5:
+            cont_precos = 1
+            cont = cont + 1
 
     # ----
         if linha.find('%EARM') != -1:
