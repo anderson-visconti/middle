@@ -7,7 +7,7 @@ def importa_dados(paths, nomes, data_inicial):
     dados = pd.DataFrame()
     for path in paths.keys():  # itera sobre pastas
         i = 1
-        if path not in  [r'pontos_grade', r'remocao_vies', r'remover']:
+        if path not in  [r'pontos_grade', r'remocao_vies', r'remover', r'export']:
             for arquivos in os.listdir(paths[path]):  # itera sobre arquivos
                 dados_temp = pd.read_fwf(filepath_or_buffer=r'{caminho}\{p1}{p2:%d%m%y}{p3}{p4:%d%m%y}{extensao}'.
                                          format(caminho=paths[path],
@@ -43,26 +43,30 @@ def importa_config(paths, sep, decimal):
 
 def remove_vies(df_dados, config_remocao, sub_bacia, df_grade_sub_bacia):
     import pandas as pd
+
+    df_sub_bacia = pd.DataFrame()
     #  filtra subbacia
-    df_sub_bacia  =pd.DataFrame(df_dados.loc[
-        (df_dados.lon.isin(df_grade_sub_bacia.lon.unique())) &
-        (df_dados.lat.isin(df_grade_sub_bacia.lat.unique())) &
-        (df_dados.modelo.isin(config_remocao.modelo.unique()))
-    ]
-                                )
-    #print df_dados
+    for i in df_grade_sub_bacia.iterrows():
+        df_aux  = pd.DataFrame(df_dados.loc[
+                                   (df_dados.lon == float(i[1].lon)) &
+                                   (df_dados.lat == float(i[1].lat)) &
+                                   (df_dados.modelo == i[1].modelo)
+                               ]
+        )
+        df_sub_bacia = pd.concat([df_sub_bacia, df_aux])
+
     # valor medio dos 10 dias
     media_diaria = []
     for i in df_sub_bacia.data.unique():
         media_diaria_aux = {'data': i,
-                           'media': pd.Series(df_sub_bacia.loc[df_sub_bacia.data == i, 'precip']).mean() ** 1.5
+                           'media': pd.Series(df_sub_bacia.loc[df_sub_bacia.data == i, 'precip']).mean()
                             }
         media_diaria.append(media_diaria_aux)
 
     df_media_diaria = pd.DataFrame(media_diaria)
 
     #  Verifica se precisa ajustar por equacao do 2 grau
-    if df_media_diaria.media.sum() <= config_remocao.iloc[0]['limite_remocao']:
+    if df_media_diaria['media'].sum() <= config_remocao.iloc[0]['limite_remocao']:
         limite_remocao = config_remocao.iloc[0]['a'] * df_media_diaria.media.sum()  ** 2 + \
                          config_remocao.iloc[0]['b'] * df_media_diaria.media.sum()
     else:
@@ -98,24 +102,34 @@ def remove_vies(df_dados, config_remocao, sub_bacia, df_grade_sub_bacia):
     return  df_sub_bacia
 
 
+def precip_conjunto(df_dados, config_conjunto):
+    return
+
+
+def cria_mapa(df_dados):
+    return
+
+
 if __name__ == '__main__':
     import pandas as pd
     import numpy as np
     from datetime import datetime, timedelta
     import os
 
-    paths = {'gesf': r'C:\Users\anderson.visconti\Desktop\GEFS_precipitacao10d',
-             'eta': r'C:\Users\anderson.visconti\Desktop\Eta40_precipitacao10d',
-             'pontos_grade': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Previsao de Vazao\Remocao',
-             'remocao_vies': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Previsao de Vazao\Remocao',
-             'remover': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Previsao de Vazao\Remocao'
+    paths = {'gesf': r'C:\Users\ander\Desktop\GEFS_precipitacao10d',
+             'eta': r'C:\Users\ander\Desktop\Eta40_precipitacao10d',
+             'pontos_grade': r'C:\Users\ander\Desktop',
+             'remocao_vies': r'C:\Users\ander\Desktop',
+             'remover': r'C:\Users\ander\Desktop',
+             'export': r'C:\Users\ander\Desktop'
              }
 
     nomes = {'gesf':[r'GEFS_p', r'a', r'.dat'],
              'eta': [r'ETA40_p', r'a', r'.dat'],
              'pontos_grade': [r'pontos_grade', r'.csv'],
              'remocao_vies': [r'remocao_vies', r'.csv'],
-             'remover': [r'remover', r'.csv']
+             'remover': [r'remover', r'.csv'],
+             'export': [r'dados_vies', r'.csv']
              }
 
     data_inicial = r'09/05/2017'
@@ -155,7 +169,9 @@ if __name__ == '__main__':
                                      )
 
     df_liberados = df_remover[df_remover.flag == 1]
+
     #   remocao de vies em todas as bacias liberadas
+    df_sub_bacia_vies = pd.DataFrame()
     for item in df_liberados['sub_bacia']:
         df_aux = remove_vies(df_dados=df_dados,
                              config_remocao=df_remocao_vies[(df_remocao_vies['sub_bacia'] == item) &
@@ -164,14 +180,21 @@ if __name__ == '__main__':
                              df_grade_sub_bacia=df_pontos_grade[df_pontos_grade['sub_bacia'] == item]
                              )
 
+        df_sub_bacia_vies = pd.concat([df_sub_bacia_vies, df_aux])
 
+    df_final = df_dados
+    df_final['precip_vies'] = df_final['precip']
+    df_dados.set_index(keys=['modelo', 'data', 'lat', 'lon'], inplace=True)
+    for i in df_sub_bacia_vies.iterrows():
+        df_final.set_value(index=(i[1].modelo, i[1].data, i[1].lat, i[1].lon),
+                           col='precip_vies',
+                           value=i[1]['precip_vies']
+                           )
 
+    df_final.to_csv(path_or_buf=r'{}\{}{}'.format(paths['export'], nomes['export'][0], nomes['export'][1]),
+                    sep=';',
+                    decimal=','
+    )
 
-
-    #
-    print df_remover
-    print df_remocao_vies
-    print df_pontos_grade
-    print df_dados
     pass
 
