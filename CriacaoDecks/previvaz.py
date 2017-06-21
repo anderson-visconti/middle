@@ -62,12 +62,12 @@ def cria_arquivos(parametros):
         os.mkdir(path)
 
     #  cria arquivo caso.dat
-    file_caso = file(os.path.join(path, 'caso.dat'), 'w')
+    file_caso = open(os.path.join(path, 'caso.dat'), 'a')
     file_caso.write('{}.inp'.format(parametros['dados_config']['CodigoDoPosto']))
     file_caso.close()
 
     #  cria arquivo .inp
-    file_inp = file(os.path.join(path, '{}.inp'.format(parametros['dados_config']['CodigoDoPosto'])), 'w')
+    file_inp = open(os.path.join(path, '{}.inp'.format(parametros['dados_config']['CodigoDoPosto'])), 'a')
     file_inp.write(
 """{}                       ! nome do arquivo de relatorio
 {}                       ! impressao dos parametros ?
@@ -107,7 +107,7 @@ def cria_arquivos(parametros):
     file_inp.close()
 
     #  cria arquivo .lim
-    file_limite = file(os.path.join(path, '{}.lim'.format(parametros['dados_config']['CodigoDoPosto'])), 'w')
+    file_limite = open(os.path.join(path, '{}.lim'.format(parametros['dados_config']['CodigoDoPosto'])), 'a')
     file_limite.write(
 '''{}          ! Agrupamento (1:semanal, 2:mensal, 3:trimestral, 4:semestral)
 {}          ! Faixas de Vazao (1:sem divisao, 2:duas faixas, 3:tres faixas, 4:quatro faixas)
@@ -125,7 +125,7 @@ def cria_arquivos(parametros):
     file_limite.close()
 
     #  cria _str.dat
-    file_str = file(os.path.join(path, '{}_str.dat'.format(parametros['dados_config']['CodigoDoPosto'])), 'w', )
+    file_str = open(os.path.join(path, '{}_str.dat'.format(parametros['dados_config']['CodigoDoPosto'])), 'a', )
     s =\
 '''      {posto:>3d}
  {ano_inicial} {ano_final}  {drenagem}\n'''
@@ -169,7 +169,7 @@ if __name__ == '__main__':
     import pyodbc
 
     t1 = datetime.now()
-    print(r'Execução em {} processos'.format(cpu_count())).decode('iso-8859-1')
+    print(r'Execucao em {} processos'.format(cpu_count()))
     p = Pool(processes=cpu_count())
     p = Pool(processes=1)
 
@@ -204,7 +204,7 @@ if __name__ == '__main__':
 
         dados_arquivos.append(dic_aux)
 
-    print('Preparação dos arquivos de configuração'.decode('iso-8859-1'))
+    print('Preparacao dos arquivos de configuracao')
     result = p.map(func=cria_arquivos, iterable=dados_arquivos)
 
     folders = pd.Series(os.listdir(path['caso']))
@@ -227,7 +227,7 @@ if __name__ == '__main__':
     parametros = np.array(parametros)
 
     # Paralelismo
-    print('\nExecução de previvaz\n'.decode('iso-8859-1'))
+    print('\nExecucao de previvaz\n')
     result = p.map(func=worker, iterable=parametros)
     p.close()
     df_previsao = pd.DataFrame()
