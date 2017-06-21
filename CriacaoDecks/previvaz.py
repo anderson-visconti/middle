@@ -53,7 +53,7 @@ def cria_arquivos(parametros):
     import numpy as np
     import pandas as pd
 
-    print ('Criacao de arquivos para o posto -> {}'.format(parametros['dados_config']['CodigoDoPosto'])).decode('iso-8859-1')
+    print ('Criacao de arquivos para o posto -> {}'.format(parametros['dados_config']['CodigoDoPosto']))
 
     #  cria pasta
     path = r'{}\{}'.format(parametros['caso_export'], parametros['dados_config']['CodigoDoPosto'])
@@ -62,12 +62,12 @@ def cria_arquivos(parametros):
         os.mkdir(path)
 
     #  cria arquivo caso.dat
-    file_caso = open(os.path.join(path, 'caso.dat'), 'a')
+    file_caso = open(os.path.join(path, 'caso.dat'), 'w')
     file_caso.write('{}.inp'.format(parametros['dados_config']['CodigoDoPosto']))
     file_caso.close()
 
     #  cria arquivo .inp
-    file_inp = open(os.path.join(path, '{}.inp'.format(parametros['dados_config']['CodigoDoPosto'])), 'a')
+    file_inp = open(os.path.join(path, '{}.inp'.format(parametros['dados_config']['CodigoDoPosto'])), 'w')
     file_inp.write(
 """{}                       ! nome do arquivo de relatorio
 {}                       ! impressao dos parametros ?
@@ -107,7 +107,7 @@ def cria_arquivos(parametros):
     file_inp.close()
 
     #  cria arquivo .lim
-    file_limite = open(os.path.join(path, '{}.lim'.format(parametros['dados_config']['CodigoDoPosto'])), 'a')
+    file_limite = open(os.path.join(path, '{}.lim'.format(parametros['dados_config']['CodigoDoPosto'])), 'w')
     file_limite.write(
 '''{}          ! Agrupamento (1:semanal, 2:mensal, 3:trimestral, 4:semestral)
 {}          ! Faixas de Vazao (1:sem divisao, 2:duas faixas, 3:tres faixas, 4:quatro faixas)
@@ -125,7 +125,7 @@ def cria_arquivos(parametros):
     file_limite.close()
 
     #  cria _str.dat
-    file_str = open(os.path.join(path, '{}_str.dat'.format(parametros['dados_config']['CodigoDoPosto'])), 'a', )
+    file_str = open(os.path.join(path, '{}_str.dat'.format(parametros['dados_config']['CodigoDoPosto'])), 'w', )
     s =\
 '''      {posto:>3d}
  {ano_inicial} {ano_final}  {drenagem}\n'''
@@ -171,7 +171,7 @@ if __name__ == '__main__':
     t1 = datetime.now()
     print(r'Execucao em {} processos'.format(cpu_count()))
     p = Pool(processes=cpu_count())
-    p = Pool(processes=1)
+    #p = Pool(processes=1)
 
 
     config_exec = {'path': r'C:\ENCAD3~1.0\Previvaz\bin\previvaz',
