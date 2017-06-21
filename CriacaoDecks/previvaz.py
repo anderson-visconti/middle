@@ -1,4 +1,4 @@
-# -*- coding: latin-1 -*-
+# -*- coding: iso-8859-1 -*-
 def worker(parametros):
     import os
     from shutil import copyfile
@@ -51,10 +51,9 @@ def le_banco(path):
 def cria_arquivos(parametros):
     import os
     import numpy as np
-    import codecs
     import pandas as pd
 
-    print 'Criacao de arquivos para o posto -> {}'.format(parametros['dados_config']['CodigoDoPosto'])
+    print ('Criacao de arquivos para o posto -> {}'.format(parametros['dados_config']['CodigoDoPosto'])).decode('iso-8859-1')
 
     #  cria pasta
     path = r'{}\{}'.format(parametros['caso_export'], parametros['dados_config']['CodigoDoPosto'])
@@ -139,11 +138,13 @@ def cria_arquivos(parametros):
     for ano in pd.Series(parametros['dados']['Ano'].unique()).sort_values():
 
         for i in range(1, 7):
-            linha = np.array(parametros['dados'].loc[(parametros['dados'].Semana >= 1 + 9 * (i - 1)) &
-                                            (parametros['dados'].Semana <= 9 * i) &
-                                            (parametros['dados'].Ano == ano)
+            dados = pd.DataFrame(parametros['dados'].loc[(parametros['dados'].Semana >= 1 + 9 * (i - 1)) &
+                                                     (parametros['dados'].Semana <= 9 * i) &
+                                                     (parametros['dados'].Ano == ano)
 
-            ].Vazao).astype(int)
+                                                     ]).sort_values(['Semana'])
+
+            linha = np.array(dados.Vazao).astype(int)
 
             if len(linha) < 9:  #  completa com zeros as linha faltante
                 for k in range(9 - len(linha)):
@@ -168,9 +169,9 @@ if __name__ == '__main__':
     import pyodbc
 
     t1 = datetime.now()
-    print(r'Execucao em {} processos'.format(cpu_count()))
+    print(r'Execução em {} processos'.format(cpu_count())).decode('iso-8859-1')
     p = Pool(processes=cpu_count())
-    #p = Pool(processes=1)
+    p = Pool(processes=1)
 
 
     config_exec = {'path': r'C:\ENCAD3~1.0\Previvaz\bin\previvaz',
@@ -182,8 +183,8 @@ if __name__ == '__main__':
                    }
 
     path = {#'caso': r'C:\Encad 3.0\usu_1\est_1\caso_1',
-            'caso': r'C:\Users\anderson.visconti\Desktop\teste',
-            'caso_export': r'C:\Users\anderson.visconti\Desktop\teste'
+            'caso': r'C:\Encad 3.0\usu_1\est_1\caso_1',
+            'caso_export': r'C:\Encad 3.0\usu_1\est_1\caso_1'
             }
 
     df_dados_gerais, df_opcoes, df_dados_semanais, df_dados_complemento, df_limites, df_postos = le_banco(path['caso'])
@@ -203,13 +204,16 @@ if __name__ == '__main__':
 
         dados_arquivos.append(dic_aux)
 
+    print('Preparação dos arquivos de configuração'.decode('iso-8859-1'))
     result = p.map(func=cria_arquivos, iterable=dados_arquivos)
 
     folders = pd.Series(os.listdir(path['caso']))
     folders =  folders[(folders.isin(['Previvaz.mdb', 'Previvaz.ldb']) == False)].astype(int).sort_values()
     parametros = []
 
-    for folder in folders.values:
+    parametros = []
+    folders = os.listdir(path['caso'])
+    for folder in folders:
         if folder not in  ['Previvaz.mdb', 'Previvaz.ldb']:
             aux = [int(folder),
                    r'{}\{}'.format(path['caso'], folder),
@@ -223,11 +227,9 @@ if __name__ == '__main__':
     parametros = np.array(parametros)
 
     # Paralelismo
-    #print('Execucao de previvaz em {} processos'.format(cpu_count()))
-    #p = Pool(processes=cpu_count())
+    print('\nExecução de previvaz\n'.decode('iso-8859-1'))
     result = p.map(func=worker, iterable=parametros)
     p.close()
-
     df_previsao = pd.DataFrame()
     for item in result:
         df_previsao = pd.concat([df_previsao, item], axis=0)
