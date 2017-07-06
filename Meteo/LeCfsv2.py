@@ -44,7 +44,7 @@ def make_map(lons, lats, paths, nomes, dados, periodo, flag_escala):
                           drawbounds=True, linewidth=0.5)
 
     xx, yy = m(x, y)
-    levels, cores_ons = config_ons()
+    levels, cores_ons = config_ons(flag_escala)
     cs = m.contourf(xx, yy, dados, levels=levels, colors=cores_ons, extend='both', alpha=0.90)
     cbar = m.colorbar(cs, location='bottom', label='Preciptacao [mm]')
     cbar.set_ticks(levels)
@@ -152,7 +152,7 @@ if __name__ == '__main__':
 
     paths = {'chuva': r'C:\Users\anderson.visconti\Desktop\netcdf',
              'clima': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Climatologia',
-             'export': r'C:\Users\anderson.visconti\Desktop\export\2017062800',
+             'export': r'C:\Users\anderson.visconti\Desktop\export\2017070500',
              'shape_estados': r'C:\OneDrive\Middle Office\Middle\Hidrologia\ShapeFiles\brasil',
              'logo': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Previsao precipitacao conjunto'
              }
@@ -170,7 +170,7 @@ if __name__ == '__main__':
                            }
                  }
 
-    nomes = {'chuva': r'prate.01.2017062800.daily.nc',
+    nomes = {'chuva': r'prate.02.2017070500.daily.nc',
              'clima': r'precip.mon.ltm.nc',
              'shape_estados': r'BRA_adm1',
              'nome_logo': 'logo.png'
@@ -178,7 +178,7 @@ if __name__ == '__main__':
 
 
     # unit - 'd' para dias e 'MS' para meses
-    step = {'n_periodos': 6,
+    step = {'n_periodos': 9,
             'step': 7,
             'unit': 'd'
             }
