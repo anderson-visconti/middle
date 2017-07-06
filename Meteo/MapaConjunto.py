@@ -1,6 +1,8 @@
 # -*- coding: iso-8859-1 -*-
-def make_map(df_dados, nome_modelo, data_inicial, periodo_soma, path_export):
+def make_map(df_dados, nome_modelo, data_inicial, periodo_soma, path_export, path_logo, nome_logo):
     from matplotlib.patches import Polygon
+    import matplotlib.image as image
+
     fig, ax = plt.subplots()
     m = Basemap(projection='merc',
                 llcrnrlat=-35,
@@ -9,7 +11,7 @@ def make_map(df_dados, nome_modelo, data_inicial, periodo_soma, path_export):
                 urcrnrlon=-30,
                 resolution='i'
                 )
-    m.ax = ax
+    #m.ax = ax
     m.drawcoastlines(linewidth=0.15)
     m.drawcountries(linewidth=0.15)
     m.drawrivers(linewidth=0.3)
@@ -20,14 +22,14 @@ def make_map(df_dados, nome_modelo, data_inicial, periodo_soma, path_export):
         poly = Polygon(seg, facecolor='none', edgecolor='none', alpha=1.0)
         ax.add_patch(poly)
 
-    #  Preparação do mapa
+    #  PreparaÃ§Ã£o do mapa
     lons, lats = df_dados.index.get_level_values('lon').unique(), \
                  df_dados.index.get_level_values('lat').unique()
 
     x, y = np.meshgrid(lons, lats)
     precip = df_dados.unstack(level=[0])
     xx, yy = m(x, y)
-    levels = [1, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200]  # níveis para chuva
+    levels = [1, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200]  # nÃ­veis para chuva
     cores_ons = [(255.0 / 255.0, 255.0 / 255.0, 255.0 / 255.0),
                  (225.0 / 255.0, 255.0 / 255.0, 255.0 / 255.0),
                  (180.0 / 255.0, 240.0 / 255.0, 250.0 / 255.0),
@@ -51,6 +53,11 @@ def make_map(df_dados, nome_modelo, data_inicial, periodo_soma, path_export):
     cbar = m.colorbar(cs, location='bottom', label='Preciptacao [mm]')
     cbar.set_ticks(levels)
     cbar.ax.tick_params(labelsize=8)
+    im = plt.imread(fname=os.path.join(path_logo, nome_logo))
+    newax = fig.add_axes([0.58, 0.16, 0.2, 0.2], anchor='SE', zorder=+1)
+    newax.imshow(im)
+    newax.axis('off')
+
     plt.savefig(os.path.join(path_export, '{:%Y%m%d}-{}.png'.format(data_inicial, nome_modelo)),
                 bbox_inches='tight'
                 )
@@ -110,7 +117,7 @@ def calcula_pesos(df_precip_eta, df_precip_gesf, df_config, df_pesos):
                                         col='precip',
                                         value=df_precip_eta.loc[(j, i[1].lon, i[1].lat)] * \
                                               df_pesos[(df_pesos['nome_bacia'] == i[1]['nome_bacia']) &
-                                                       (df_pesos['dia_proj']== (j- data_inicial).days)
+                                                       (df_pesos['dia_proj']== (j - data_inicial).days + 1)
                                               ]['eta'].values[0]
                                         )
         else:
@@ -136,6 +143,7 @@ if __name__ == '__main__':
     from matplotlib.patches import Polygon
     import os
     from datetime import datetime
+
     t = datetime.now()
 
     cols = ['lon', 'lat', 'precip']
@@ -149,20 +157,24 @@ if __name__ == '__main__':
                     'lon': np.float
                     }
 
-    path = {'ETA':r'C:\OneDrive\Middle Office\Middle\Hidrologia\Relatorios\Chuva-Vazao\Chuva\ETA',
-            'GESF':r'C:\OneDrive\Middle Office\Middle\Hidrologia\Relatorios\Chuva-Vazao\Chuva\GESF'
+    path = {'ETA':r'C:\OneDrive\Middle Office\Middle\Hidrologia\Relatorios\Chuva\ETA',
+            'GESF':r'C:\OneDrive\Middle Office\Middle\Hidrologia\Relatorios\Chuva\GESF'
             }
 
-    data_inicial = '2017-06-14'
+    data_inicial = '2017-07-05'
 
-    periodo_soma = {'de': '2017-06-15',
-                    'ate': '2017-06-25'}
+    periodo_soma = {'de': '2017-07-08',
+                    'ate': '2017-07-14'
+                    }
 
-    file_config = {'path_config': r'C:\Users\ander\Desktop',
+    file_config = {'path_config': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Previsao precipitacao conjunto',
                    'nome': r'pontos_grade.csv',
-                   'path_pesos': r'C:\Users\ander\Desktop',
+                   'path_pesos': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Previsao precipitacao conjunto',
                    'nome_pesos': r'pesos_projecao.csv',
-                   'path_export': r'C:\Users\ander\Desktop'}
+                   'path_export': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Base de Figuras\Acumulado',
+                   'path_logo':r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Previsao precipitacao conjunto',
+                   'nome_logo':r'Logo.png'
+                   }
 
 
     for i in periodo_soma.keys():
@@ -175,7 +187,7 @@ if __name__ == '__main__':
 
     #  Importa dados de chuva
     for i in path.keys():
-        cont = 1
+        cont = 0
         arquivos = os.listdir(os.path.join(path[i], '{:%Y%m%d}'.format(data_inicial)))
 
         for j in arquivos:
@@ -184,7 +196,7 @@ if __name__ == '__main__':
                                    types=types,
                                    data=data_inicial + pd.to_timedelta(1 * cont, 'd'))
 
-            if i == 'ETA':
+            if i in  ['ETA', 'eta']:
                 df_precip_eta = pd.concat([df_precip_eta, df_aux])
                 cont += 1
 
@@ -192,27 +204,41 @@ if __name__ == '__main__':
                 df_precip_gesf = pd.concat([df_precip_gesf, df_aux])
                 cont += 1
 
-    #  Importa dados de configuração
+    #  Importa dados de configuraÃ§Ã£o
     df_config = importa_config(\
         full_path=os.path.join(file_config['path_config'], file_config['nome']),
         cols=cols_config
     )
 
-    #  Importa pesos de projeção
+    #  Importa pesos de projeÃ§Ã£o
     df_pesos = pd.read_csv(os.path.join(file_config['path_pesos'], file_config['nome_pesos']),
                            sep=';',
                            decimal=','
                            )
 
+    df_config.drop_duplicates(['lat', 'lon', 'nome_bacia'], keep='first', inplace=True)
+
+    """
+    print df_config.head()
+    print df_config.shape
+    df_config.drop_duplicates(['lat', 'lon', 'nome_bacia'], keep='first', inplace=True)
+    print df_config.shape
+    df = df_config.loc[df_config.modelo == 'eta', ['lat', 'lon', 'nome_bacia']]
+    print df.head()
+    print df_config.head()
+    df_teste = pd.merge(df_precip_eta, df, how='left', on=['lat', 'lon'])
+    """
     #  Calcula pesos
     df_precip_eta, df_precip_gesf = calcula_pesos(df_precip_eta=df_precip_eta,
                                                   df_precip_gesf=df_precip_gesf,
                                                   df_config=df_config,
                                                   df_pesos=df_pesos
                                                   )
+
     df_conjunto =pd.DataFrame(df_precip_eta)
 
-    #  Monta preciptação por conjunto
+    #  Monta preciptaÃ§Ã£o por conjunto
+
     for i in df_precip_eta.index.get_level_values('data').unique(): # itera sobre os dias
 
         for j in df_config['nome_bacia'].unique():  # itera sobre todas as bacias
@@ -225,18 +251,32 @@ if __name__ == '__main__':
             chuva_eta = 0.0
             chuva_gesf = 0.0
 
+            if len(pontos_eta) == 0:
+                comp_eta = 1.0
+
+            else:
+                comp_eta = len(pontos_eta)
+
+            if len(pontos_gesf) == 0:
+                comp_gesf = 1.0
+
+            else:
+                comp_gesf = len((pontos_gesf))
+
+
             for k in pontos_eta:    #  itera sobre os pontos de grade do ETA
                 chuva_eta = chuva_eta + df_precip_eta.loc[i, k[0], k[1]].values
+
 
             for k in pontos_gesf:   #  itera sobre os pontos de grade do gesf
                 chuva_gesf = chuva_gesf + df_precip_gesf.loc[i, k[0], k[1]].values
 
-            chuva_media = (chuva_eta/len(pontos_eta) + chuva_gesf/len(pontos_gesf)) # determina chuva de conjunto
+        chuva_media = (chuva_eta/comp_eta + chuva_gesf/comp_gesf) # determina chuva de conjunto
 
-            for k in pontos_eta:    #  atualiza valor da chuva media de conjunto na grade do ETA
-                df_conjunto.set_value(index=(i, k[0], k[1]),
-                                      col='precip',
-                                      value= chuva_media)
+        for k in pontos_eta:    #  atualiza valor da chuva media de conjunto na grade do ETA
+            df_conjunto.set_value(index=(i, k[0], k[1]),
+                                  col='precip',
+                                  value= chuva_media)
 
     #  Seleciona dados para acumular
     df_precip_eta = df_precip_eta.loc[periodo_soma['de']:periodo_soma['ate']]
@@ -253,23 +293,34 @@ if __name__ == '__main__':
                      nome_modelo='Previsao por Conjunto',
                      data_inicial=data_inicial,
                      periodo_soma=periodo_soma,
-                     path_export=file_config['path_export']
+                     path_export=file_config['path_export'],
+                     path_logo=file_config['path_logo'],
+                     nome_logo=file_config['nome_logo']
                      )
     #  Mapa ETA
     m, ax = make_map(df_dados=df_acumulado_eta,
                      nome_modelo='ETA',
                      data_inicial=data_inicial,
                      periodo_soma=periodo_soma,
-                     path_export=file_config['path_export']
+                     path_export=file_config['path_export'],
+                     path_logo=file_config['path_logo'],
+                     nome_logo=file_config['nome_logo']
                      )
     #  Mapa GESF
     m, ax = make_map(df_dados=df_acumulado_gesf,
                      nome_modelo='GESF',
                      data_inicial=data_inicial,
                      periodo_soma=periodo_soma,
-                     path_export=file_config['path_export']
+                     path_export=file_config['path_export'],
+                     path_logo=file_config['path_logo'],
+                     nome_logo=file_config['nome_logo']
                      )
 
     print('Tempo total: {}s'.format((datetime.now() - t).total_seconds()))
     print('Termino do script')
+    df_conjunto.to_csv(path_or_buf=os.path.join(file_config['path_export'],
+                                                'previsao_conjunto_{:%Y%m%d}.csv'.format(data_inicial)),
+                       sep=';',
+                       decimal=',',
+                       )
     pass
