@@ -5,6 +5,7 @@ class Gerenciador:
         self.paths = paths
         self.nomes = nomes
         self.config_servidor = config_servidor
+        self.resultados = pd.DataFrame()
         return
 
 
@@ -17,6 +18,7 @@ class Gerenciador:
                                })
         self.lista = pd.DataFrame.from_dict(self.lista)
         return self
+
 
     def executar_decomp(self):
         # itera sobre todos os cenarios
@@ -33,6 +35,7 @@ class Gerenciador:
             print('Preparacao para executar {}'.format(i[1].caminho))
             os.chdir(i[1].caminho)
             #FNULL = open(os.devnull, 'w')
+            print('Execucao do decomp para {}'.format(i[1].caminho))
             stdout = open(os.path.join(i[1].caminho, 'stdout.txt'), 'w')    # arquivo para saida
             stderr = open(os.path.join(i[1].caminho, 'stderr.txt'), 'w')    # arquivo para saida de erros
             retcode = subprocess.call(['convertenomesdecomp_{}'.format(self.config_servidor['versao_decomp'])
@@ -49,14 +52,80 @@ class Gerenciador:
                                      stdout=stdout,
                                      stderr=stderr,
                                      shell=True
-                                     )
-            print(retcode)
-            # remove todos os arquivos execeto relato.rv0 e prevs.rv0
+                                      )
+            stdout.close()
+            stderr.close()
+            if retcode == 1:
+                print('Erro ao executar cenario -> {}'.format(i[1].caminho))
+            else:
+                print('Execucao completa cenario -> {}'.format(i[1].caminho))
+                #  pega dados
+                self.pegar_resultado(cenario=i[1].cenario)
+                self.exportar_resultados()
+
+            #  remove todos os arquivos execeto relato.rv0 e prevs.rv0
             for j in os.listdir(i[1].caminho):
                 if j not in  ['relato.rv0', 'prevs.rv0']:
-                    os.remove(os.path.join(i[1].caminho), j)
+                    os.remove(os.path.join(i[1].caminho, j))
 
+            s = """---------------------------------------------------------------------------------------\n"""
+            print(s)
         return
+
+
+    def pegar_resultado(self, cenario):
+        print('Capturando resultados do cenario {}'.format(cenario))
+        relato = open(os.path.join(self.paths['decks_gevazp'], str(cenario), 'relato.rv0'), 'r')
+        submercado = 1
+        cont = 0
+        cont_ena = 1
+        dados_ena = []
+        dados_preco = []
+        ena = {'submercado': 0.0,
+               'cenario': 0.0,
+                'ena': 0.0,
+               }
+        preco = {'submercado': 0.0,
+               'cenario': 0.0,
+               'preco': 0.0,
+               }
+        for linha in relato:
+            if linha.strip() == 'RELATORIO  DO  BALANCO  ENERGETICO':
+                cont += 1
+
+            if cont > 1:
+                break
+
+            if linha[0:12].strip() == 'EAR_ini' and cont_ena <=4:    # pega ENA
+                dados_ena.append([cenario, submercado, float(linha[37:43].strip())])
+                submercado += 1
+                cont_ena += 1
+
+                if submercado > 4:
+                    submercado = 1
+
+            if linha[0:44].strip() == 'Custo marginal de operacao do subsistema':   # pega PLDs
+                if linha[44:46].strip() != 'FC':
+                    dados_preco.append([cenario, submercado, float(linha[56:69].strip())])
+                    submercado += 1
+
+                    if submercado > 4:
+                        submercado = 1
+
+        x = pd.DataFrame(data=dados_ena, columns=['cenario', 'submercado', 'ena'])
+        y = pd.DataFrame(data=dados_preco, columns=['cenario', 'submercado', 'preco'])
+        self.resultados =pd.concat([self.resultados, pd.merge(x, y, on=['cenario', 'submercado'])])
+        return self
+
+
+    def exportar_resultados(self):
+        self.resultados.to_csv(os.path.join(self.paths['export'], 'resultados.csv'),
+                               sep=';', decimal=',')
+
+        print('Resultado exportado para {}'.format(self.paths['export']))
+        return
+
+
 class Casos:
     def __init__(self, paths, nomes):
         self.paths = paths
@@ -301,11 +370,12 @@ if __name__ == '__main__':
     from multiprocessing import cpu_count, Pool
     import subprocess
     # Configuracao -----------------------------------------------------------------------------------------------------
-    paths = {'decomp_base': r'/home/middle/gevazp/gevazp/decomp-base',
-             'decks_gevazp': r'/home/middle/gevazp/gevazp/decks_1',
-             'vazoes_gevazp': r'/home/middle/gevazp/gevazp',
-             'executavel_gevazp': r'/usr/bin/gevazp',
-             'arquivos_gevazp': r'/home/middle/gevazp/gevazp/gevazp',
+    paths = {'decomp_base': r'C:\Users\anderson.visconti\Desktop\gevazp\decomp-base',
+             'decks_gevazp': r'C:\Users\anderson.visconti\Desktop\gevazp\decks',
+             'vazoes_gevazp': r'C:\Users\anderson.visconti\Desktop\gevazp',
+             'executavel_gevazp': r'C:\Gevazp',
+             'arquivos_gevazp': r'C:\Gevazp',
+             'export': r'C:\Users\anderson.visconti\Desktop\gevazp'
              }
 
     nomes = {'gevazp_exec': ['arquivos.dat', 'caso.dat', 'gevazp.dat', 'modif.dat',
@@ -318,10 +388,10 @@ if __name__ == '__main__':
                              ]
              }
 
-    config_servidor = {'n_proc': 20,
+    config_servidor = {'n_proc': 40,
                        'versao_decomp': 25,
                        'path_exec': r'/usr/bin',
-                       'path_lic': r'/home/middle/script',
+                       'path_lic': r'C:\Users\anderson.visconti\Desktop\gevazp\decomp-base',
                        'lic_decomp': r'deco.prm'
                        }
     mes = 8
@@ -330,7 +400,8 @@ if __name__ == '__main__':
 
     execucao = {'ambiente': 0,
                 'gevazp': 0,
-                'decomp': 1
+                'decomp': 1,
+                'resultados': 0
                 }
     # Fim Configuracao -------------------------------------------------------------------------------------------------
 
@@ -356,6 +427,14 @@ if __name__ == '__main__':
         gerenciador = Gerenciador(paths=paths, nomes=nomes, config_servidor=config_servidor)
         gerenciador.listar_casos()
         gerenciador.executar_decomp()
+
+    #  Captura dos resultados
+    if execucao['resultados'] == 1:
+        gerenciador = Gerenciador(paths=paths, nomes=nomes, config_servidor=config_servidor)
+        gerenciador.listar_casos()
+        for i in gerenciador.lista.iterrows():
+            gerenciador.pegar_resultado(cenario=i[1].cenario)
+            gerenciador.exportar_resultados()
 
     print('Fim')
     pass
