@@ -63,9 +63,9 @@ class Gerenciador:
                 self.pegar_resultado(cenario=i[1].cenario)
                 self.exportar_resultados()
 
-            #  remove todos os arquivos execeto relato.rv0 e prevs.rv0
+            #  remove todos os arquivos execeto relato.rv0 e prevs.rv0 e vazoes.rv0
             for j in os.listdir(i[1].caminho):
-                if j not in  ['relato.rv0', 'prevs.rv0']:
+                if j not in  ['relato.rv0', 'prevs.rv0', 'vazoes.rv0']:
                     os.remove(os.path.join(i[1].caminho, j))
 
             s = """---------------------------------------------------------------------------------------\n"""
@@ -371,7 +371,7 @@ if __name__ == '__main__':
     import subprocess
     # Configuracao -----------------------------------------------------------------------------------------------------
     paths = {'decomp_base': r'C:\Users\anderson.visconti\Desktop\gevazp\decomp-base',
-             'decks_gevazp': r'C:\Users\anderson.visconti\Desktop\gevazp\decks',
+             'decks_gevazp': r'C:\Users\anderson.visconti\Desktop\gevazp\decks_2',
              'vazoes_gevazp': r'C:\Users\anderson.visconti\Desktop\gevazp',
              'executavel_gevazp': r'C:\Gevazp',
              'arquivos_gevazp': r'C:\Gevazp',
@@ -398,9 +398,9 @@ if __name__ == '__main__':
 
     #  Determina se executap reparacao do ambiente gevazp ou apenas decomp - 1 para sim e 0 para nao
 
-    execucao = {'ambiente': 0,
-                'gevazp': 0,
-                'decomp': 1,
+    execucao = {'ambiente': 1,
+                'gevazp': 1,
+                'decomp': 0,
                 'resultados': 0
                 }
     # Fim Configuracao -------------------------------------------------------------------------------------------------
@@ -417,8 +417,8 @@ if __name__ == '__main__':
             parametros.append([caso, i])
 
     if execucao['gevazp'] == 1:
-        # p = Pool(1)
-        p = Pool(cpu_count())
+        p = Pool(1)
+        #p = Pool(cpu_count())
         result = p.map(func=executa_gevazp, iterable=parametros)
         print('Fim da execucao dso Gevazps')
 
