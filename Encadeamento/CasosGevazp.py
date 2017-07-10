@@ -320,6 +320,74 @@ class Casos:
         return self
 
 
+class Desenho:
+    def __init__(self, paths, nomes, dados, config_plot, mlt):
+        self.paths = paths
+        self.nomes = nomes
+        self.dados = dados
+        self.referencia = config_plot['sub_referencia']
+        self.par_sub = config_plot['par_subs']
+        aux = []
+        for i in range(config_plot['n_classes']):
+            aux.append([config_plot['valor_inicial'] + i * config_plot['step'],
+                        config_plot['valor_inicial'] +  (i + 1) * config_plot['step']
+                        ]
+                       )
+        self.config_plot = pd.DataFrame(data=aux, columns=['inferior', 'superior'])
+        self.mlt = mlt
+        return
+
+
+    def desenha_scatter(self, mes):
+        subsistemas = ['SE', 'S', 'NE', 'N']
+        fig = plt.figure(figsize=(13, 7))
+        ax = fig.add_subplot(111)
+
+        colors = cm.gist_rainbow(np.linspace(0, 1, self.config_plot.shape[0]))
+        self.config_plot['texto'] = self.config_plot.apply(lambda x: '{} >= pld <{}'.format(x['inferior'],
+                                                                                             x['superior']
+                                                                                             ), axis=1
+                                                           )
+
+        for i in self.config_plot.iterrows():
+            aux = pd.DataFrame(self.dados.loc[(self.dados['preco'] >= i[1].inferior) &
+                                (self.dados['preco'] < i[1].superior) &
+                                (self.dados['submercado'] == self.referencia)
+                               ]
+                               )
+
+            aux = self.dados.loc[self.dados['cenario'].isin(aux['cenario'].values)]
+
+            x = aux.loc[aux['submercado'] == self.par_sub[0], 'ena'].values / \
+                mlt.loc[mlt['mes'] == mes, str(self.par_sub[0])].values[0]
+
+            y = aux.loc[aux['submercado'] == self.par_sub[1], 'ena'].values / \
+                mlt.loc[mlt['mes'] == mes, str(self.par_sub[1])].values[0]
+
+            ax.scatter(x=x,
+                       y=y,
+                       c=colors[i[0]]
+                       )
+
+        plt.legend(self.config_plot.texto)
+        plt.xlabel(s='{} [%MLT]'.format(subsistemas[self.par_sub[0] - 1]))
+        plt.ylabel(s='{} [%MLT]'.format(subsistemas[self.par_sub[1] - 1]))
+
+        #  ajustando eixos
+        plt.tick_params(axis='both', which='major', labelsize=9)
+        plt.xticks(np.arange(0, 2.6, 0.1), rotation='horizontal')
+        plt.yticks(np.arange(0, 2.6, 0.1))
+        ticks_x = ax.get_xticks()
+        ticks_y = ax.get_yticks()
+        ax.set_xticklabels(['{:3.0f}%'.format(x * 100) for x in ticks_x])
+        ax.set_yticklabels(['{:3.0f}%'.format(x * 100) for x in ticks_y])
+
+        ax.grid(True, linestyle='--', alpha=0.85)
+        plt.title('Matriz de Precos {} - Gevazp'.format(subsistemas[self.referencia - 1]))
+        plt.savefig(os.path.join(self.paths['export'], 'resultados.png'))
+
+        return
+
 def executa_gevazp(parametros):
     import os
     import shutil
@@ -366,16 +434,22 @@ if __name__ == '__main__':
     import os
     import glob
     import pandas as pd
+    import numpy as np
     import shutil
     from multiprocessing import cpu_count, Pool
     import subprocess
+    import matplotlib.pyplot as plt
+    import matplotlib.cm as cm
+
+
     # Configuracao -----------------------------------------------------------------------------------------------------
     paths = {'decomp_base': r'C:\Users\anderson.visconti\Desktop\gevazp\decomp-base',
              'decks_gevazp': r'C:\Users\anderson.visconti\Desktop\gevazp\decks_2',
              'vazoes_gevazp': r'C:\Users\anderson.visconti\Desktop\gevazp',
              'executavel_gevazp': r'C:\Gevazp',
              'arquivos_gevazp': r'C:\Gevazp',
-             'export': r'C:\Users\anderson.visconti\Desktop\gevazp'
+             'export': r'C:\Users\anderson.visconti\Desktop\gevazp',
+             'mlt': r'C:\Users\anderson.visconti\Desktop\gevazp'
              }
 
     nomes = {'gevazp_exec': ['arquivos.dat', 'caso.dat', 'gevazp.dat', 'modif.dat',
@@ -385,7 +459,8 @@ if __name__ == '__main__':
              'vazoes': 'VAZOESTA.CSV',
              'decomp_exec': ['dadger.rv0', 'hidr.dat', 'loss.dat', 'mlt.dat',
                              'vazoes.dat'
-                             ]
+                             ],
+             'mlt':r'mlt.csv'
              }
 
     config_servidor = {'n_proc': 40,
@@ -394,14 +469,22 @@ if __name__ == '__main__':
                        'path_lic': r'C:\Users\anderson.visconti\Desktop\gevazp\decomp-base',
                        'lic_decomp': r'deco.prm'
                        }
+
+    config_plot = {'valor_inicial': 200,
+                   'n_classes': 5,
+                   'step': 50,
+                   'sub_referencia': 1,
+                   'par_subs': [1, 2]
+                   }
     mes = 8
 
     #  Determina se executap reparacao do ambiente gevazp ou apenas decomp - 1 para sim e 0 para nao
 
-    execucao = {'ambiente': 1,
-                'gevazp': 1,
+    execucao = {'ambiente': 0,
+                'gevazp': 0,
                 'decomp': 0,
-                'resultados': 0
+                'resultados': 0,
+                'desenho': 1
                 }
     # Fim Configuracao -------------------------------------------------------------------------------------------------
 
@@ -436,5 +519,11 @@ if __name__ == '__main__':
             gerenciador.pegar_resultado(cenario=i[1].cenario)
             gerenciador.exportar_resultados()
 
+    #  Monta grafico
+    if execucao['desenho'] == 1:
+        resultados = pd.read_csv(os.path.join(paths['export'], 'resultados.csv'), sep=';', decimal=',')
+        mlt = pd.read_csv(os.path.join(paths['mlt'], nomes['mlt']), sep=';', decimal=',')
+        desenho = Desenho(paths=paths, nomes=nomes ,dados=resultados, config_plot=config_plot, mlt=mlt)
+        desenho.desenha_scatter(mes=mes)
     print('Fim')
     pass
