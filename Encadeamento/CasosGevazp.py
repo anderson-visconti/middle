@@ -141,10 +141,12 @@ class Casos:
         self.dados = df
         return self
 
+
     def gerar_arquivos(self):
         print('qualquer coisa')
 
         return
+
 
     def gerar_ambiente(self):
         c = self.dados.index.levels[0].values
@@ -156,6 +158,7 @@ class Casos:
 
         print('Ambiente de pastas criado em {}'.format(self.paths['decks_gevazp']))
         return self
+
 
     def gerar_prevs(self):
         s = '''{:>6d}{:>5d}{:>10d}{:>10d}{:>10d}{:>10d}{:>10d}{:>10d}\n'''
@@ -176,7 +179,7 @@ class Casos:
             file = open(r'{}/{}/{}'.format(self.paths['decks_gevazp'], i, 'prevs.rv0'), 'w')
             aux = pd.DataFrame(self.dados.loc[i, :, :])
             for j in ordem:
-                vazao = abs(int(self.dados.loc[i, j, :][str(mes)].values[0]))
+                vazao = abs(int(math.ceil(self.dados.loc[i, j, :][str(mes)].values[0])))
                 file.write(s.format(k, j, vazao, vazao, vazao, vazao, vazao, vazao))
                 k += 1
 
@@ -190,6 +193,7 @@ class Casos:
 
         print('Arquivos prevs criados')
         return self
+
 
     def calcula_postos(self, mes):
         x = [237, 240, 242, 238, 239, 245, 244, 246, 129, 202, 130, 125, 201, 203, 117, 301, 266, 76, 288, 34]
@@ -374,9 +378,9 @@ class Desenho:
         plt.ylabel(s='{} [%MLT]'.format(subsistemas[self.par_sub[1] - 1]))
 
         #  ajustando eixos
-        plt.tick_params(axis='both', which='major', labelsize=9)
-        plt.xticks(np.arange(0, 2.6, 0.1), rotation='horizontal')
-        plt.yticks(np.arange(0, 2.6, 0.1))
+        plt.tick_params(axis='both', which='major', labelsize=7)
+        plt.xticks(np.arange(0, 3.1, 0.1), rotation='horizontal')
+        plt.yticks(np.arange(0, 3.1, 0.1))
         ticks_x = ax.get_xticks()
         ticks_y = ax.get_yticks()
         ax.set_xticklabels(['{:3.0f}%'.format(x * 100) for x in ticks_x])
@@ -387,6 +391,7 @@ class Desenho:
         plt.savefig(os.path.join(self.paths['export'], 'resultados.png'))
 
         return
+
 
 def executa_gevazp(parametros):
     import os
@@ -417,16 +422,21 @@ def executa_gevazp(parametros):
     # Executa gevazp
     os.chdir(os.path.join(path, 'gevazp'))
     FNULL = open(os.devnull, 'w')
-    retcode = subprocess.call(['gevazp'], stdout=FNULL, stderr=subprocess.STDOUT)
+    stdout = open(os.path.join(path, 'stdout.txt'), 'w')
+    stderr = open(os.path.join(path, 'stderr.txt'), 'w')
+    retcode = subprocess.call([caso.paths['executavel_gevazp']], stdout=stdout, stderr=stderr)
 
     #  Copia arquivo para pasta anterior
+    if os.path.isfile(os.path.join(path, 'gevazp', 'vazoes.rv0')) == False:
+        raw_input("Executavel nao encontrado")
+
     shutil.copy(os.path.join(path, 'gevazp', 'vazoes.rv0'), path)
 
     # Limpa pasta
     os.chdir(path)
     shutil.rmtree(os.path.join(path, 'gevazp'))
 
-    print('Concluido -> {} Tempo de execucao GEVAZP :{}s'.format(path, (datetime.now() - t).total_seconds()))
+    print('Concluido -> {} Tempo de execucao GEVAZP :{:06.2f}s'.format(path, (datetime.now() - t).total_seconds()))
     return
 
 
@@ -441,7 +451,6 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import matplotlib.cm as cm
 
-
     # Configuracao -----------------------------------------------------------------------------------------------------
     paths = {'decomp_base': r'C:\Users\anderson.visconti\Desktop\gevazp\decomp-base',
              'decks_gevazp': r'C:\Users\anderson.visconti\Desktop\gevazp\decks_2',
@@ -452,7 +461,7 @@ if __name__ == '__main__':
              'mlt': r'C:\Users\anderson.visconti\Desktop\gevazp'
              }
 
-    nomes = {'gevazp_exec': ['arquivos.dat', 'caso.dat', 'gevazp.dat', 'modif.dat',
+    nomes = {'gevazp_exec': ['arquivos.dat', 'caso.dat', 'gevazp.dat', 'MODIF.DAT',
                              'postos.dat', 'regras.dat', 'rv0.txt'
                              ],
              'gevazp_lic': 'gevazp.lic',
@@ -470,8 +479,8 @@ if __name__ == '__main__':
                        'lic_decomp': r'deco.prm'
                        }
 
-    config_plot = {'valor_inicial': 200,
-                   'n_classes': 5,
+    config_plot = {'valor_inicial': 150,
+                   'n_classes': 7,
                    'step': 50,
                    'sub_referencia': 1,
                    'par_subs': [1, 2]
