@@ -347,8 +347,8 @@ class Desenho:
         fig = plt.figure(figsize=(13, 7))
         ax = fig.add_subplot(111)
 
-        colors = cm.gist_rainbow(np.linspace(0, 1, self.config_plot.shape[0]))
-        self.config_plot['texto'] = self.config_plot.apply(lambda x: '{} >= pld <{}'.format(x['inferior'],
+        colors = cm.hsv(np.linspace(0, 1, self.config_plot.shape[0]))
+        self.config_plot['texto'] = self.config_plot.apply(lambda x: '{} >= pld < {}'.format(x['inferior'],
                                                                                              x['superior']
                                                                                              ), axis=1
                                                            )
@@ -373,19 +373,25 @@ class Desenho:
                        c=colors[i[0]]
                        )
 
-        plt.legend(self.config_plot.texto)
-        plt.xlabel(s='{} [%MLT]'.format(subsistemas[self.par_sub[0] - 1]))
-        plt.ylabel(s='{} [%MLT]'.format(subsistemas[self.par_sub[1] - 1]))
+        #  Legenda
+        cenarios = self.dados.shape[0] / 4
+        plt.legend(self.config_plot.texto, loc=2, title='Agrupamento de {} cenarios'.format(cenarios),
+                   fancybox=True
+                   )
+        ax.get_legend().get_title().set_color("red")
 
         #  ajustando eixos
+        plt.xlabel(s='{} [%MLT]'.format(subsistemas[self.par_sub[0] - 1]))
+        plt.ylabel(s='{} [%MLT]'.format(subsistemas[self.par_sub[1] - 1]))
         plt.tick_params(axis='both', which='major', labelsize=7)
-        plt.xticks(np.arange(0, 3.1, 0.1), rotation='horizontal')
-        plt.yticks(np.arange(0, 3.1, 0.1))
+        ax.xaxis.set_major_locator(ticker.MultipleLocator(0.1))
+        ax.yaxis.set_major_locator(ticker.MultipleLocator(0.2))
         ticks_x = ax.get_xticks()
         ticks_y = ax.get_yticks()
         ax.set_xticklabels(['{:3.0f}%'.format(x * 100) for x in ticks_x])
         ax.set_yticklabels(['{:3.0f}%'.format(x * 100) for x in ticks_y])
 
+        # Insere grade
         ax.grid(True, linestyle='--', alpha=0.85)
         plt.title('Matriz de Precos {} - Gevazp'.format(subsistemas[self.referencia - 1]))
         plt.savefig(os.path.join(self.paths['export'], 'resultados.png'))
@@ -448,6 +454,7 @@ if __name__ == '__main__':
     import shutil
     from multiprocessing import cpu_count, Pool
     import subprocess
+    import matplotlib.ticker as ticker
     import matplotlib.pyplot as plt
     import matplotlib.cm as cm
 
@@ -479,8 +486,8 @@ if __name__ == '__main__':
                        'lic_decomp': r'deco.prm'
                        }
 
-    config_plot = {'valor_inicial': 150,
-                   'n_classes': 7,
+    config_plot = {'valor_inicial': 100,
+                   'n_classes': 10,
                    'step': 50,
                    'sub_referencia': 1,
                    'par_subs': [1, 2]
@@ -509,8 +516,8 @@ if __name__ == '__main__':
             parametros.append([caso, i])
 
     if execucao['gevazp'] == 1:
-        p = Pool(1)
-        #p = Pool(cpu_count())
+        #p = Pool(1)
+        p = Pool(cpu_count())
         result = p.map(func=executa_gevazp, iterable=parametros)
         print('Fim da execucao dso Gevazps')
 
@@ -534,5 +541,6 @@ if __name__ == '__main__':
         mlt = pd.read_csv(os.path.join(paths['mlt'], nomes['mlt']), sep=';', decimal=',')
         desenho = Desenho(paths=paths, nomes=nomes ,dados=resultados, config_plot=config_plot, mlt=mlt)
         desenho.desenha_scatter(mes=mes)
+
     print('Fim')
     pass
