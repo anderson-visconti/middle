@@ -404,7 +404,7 @@ class Desenho:
                            mlt.loc[mlt['mes'] == mes, str(self.par_sub[1])].values[0])
                  ]
         print round(lim_y[1] * 100) / 1000
-        plt.xticks(np.arange(0, lim_x[1], round(lim_y[1] * 100) / 2000), rotation=30)
+        plt.xticks(np.arange(0, lim_x[1], round(lim_y[1] * 100) / 5000), rotation=30)
         plt.yticks(np.arange(0, lim_y[1], round(lim_x[1] * 100) / 1000))
         ticks_x = ax.get_xticks()
         ticks_y = ax.get_yticks()
