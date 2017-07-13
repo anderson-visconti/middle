@@ -433,9 +433,10 @@ class Desenho:
                     color='r',
                     weight='bold',
                     arrowprops=dict(facecolor='r', edgecolor='r'),
-                    xytext=(self.retangulo['lower_left'][0] + self.retangulo['width'] + 0.2,
-                            self.retangulo['lower_left'][1] + self.retangulo['height'] + 0.2
-                            )
+                    xytext=(self.retangulo['lower_left'][0] + self.retangulo['width'] + 0.3,
+                            self.retangulo['lower_left'][1] + self.retangulo['height'] + 0.3
+                            ),
+                    fontsize=14
                     )
 
         # Salva figura
