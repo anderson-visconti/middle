@@ -465,8 +465,7 @@ class Desenho:
                        c=colors[i[0]]
                        )
 
-        #  Legenda
-        print self.config_plot
+        #  Legenda        
         cenarios = self.dados.shape[0] / 4 + 1
         plt.legend(self.config_plot.texto, loc=2, title='Agrupamento de {} cenarios'.format(cenarios),
                    fancybox=True
