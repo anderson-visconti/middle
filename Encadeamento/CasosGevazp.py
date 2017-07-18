@@ -1,5 +1,64 @@
 #!/usr/bin/env python
 # *- coding: utf-8 -*-
+global private_key
+private_key = '''-----BEGIN RSA PRIVATE KEY-----
+MIICXQIBAAKBgQC7njVlhaVw3Es+ujIWFzmCuN4vcu+MycIZkGlIldqXpk/SXwK4
+sSi2n6vYBWvfXLrnp3m2JGFI4LyE3c84tkhayEntdfFX0HcCjVZ9ROf9R8EtMDwP
+B8AfbKTqmejP4qhinGGoC4UnnCZY5wGIzmAoHE4gIEXwSNZ2sKuhXp4gnQIDAQAB
+AoGASkWfLclybPNIdlSPb19STQWSL4Z4fmuAg04/35QzLMWR493o3eSEEYe0J5g9
+0/aJpxsNe6V7PbZ56r9EQVcn3NrUgcTxFQJiWBLsfn1fneNRwI8VlF7uCb+xLIum
+5amuTq7tXbloi0y/JsuU2T1JOWaKrvKK5vjo6PCxEFhgjwECQQDYNXiNCipVPWVV
+gu5IxwZoyqwbEPE3dj5MvmC7j66ccyPSh4WeE+zMzhHV46FSdlaGv0Z2sCZHUgoV
+N1u0qHR1AkEA3iWy8RWnVFB7dYMGy9YtOyrhsjJseLif3T85dfTdORCdJe8qVWIG
+5QdoqwMs2b9w9wH37G2sSYLTw9nvhubWiQJAZPvEjIuc7ic491GqHg/nbHaNIC8v
+myn9OzcIU1Juyd/1cVWfERBZX+c36WDibnObQmCAdtsbZeBpmTM8AAtWKQJBAIxe
+X+KMXy4cqNZJE8tLK0t+vhw+VmI1rvY7VBCfyAWd5N6qcCKBjX+8nbuphvaUTEoY
+GVNwvXO50huoIv0n8ZkCQQDOmPKAasRavV9iuj3ekQhH6iwHbMa46sYF5aoAGQ/m
+hCL6y79BelOBAnBHt/oUvp4dqjwr8J2wGGi1DBvUWlGu
+-----END RSA PRIVATE KEY-----'''
+
+class Criptografia:
+    def __init__(self, paths, nomes):
+        self.paths = paths
+        self.nomes = nomes
+        return
+
+    def gerar_chave_publica(self):
+        self.public_key = RSA.importKey(private_key).publickey().exportKey()
+        pub_key_file = open(os.path.join(self.paths['export'], self.nomes['public_key']), 'w')
+        try:
+            pub_key_file.write(str(self.public_key))
+            print('\nchave publica {} exportada para {}\n'.format(self.nomes['public_key'],
+                                                                self.paths['export']
+                                                              )
+                  )
+            pub_key_file.close()
+        except:
+            print('\nNao foi possivel exportar a chave publica {} para {}\n'.format(self.nomes['public_key'],
+                                                                                  self.paths['export']
+                                                                                )
+                  )
+        return self
+
+
+    def gerar_senha(self):
+        pub_key = open(os.path.join(self.paths['export'], self.nomes['public_key']), 'r').read()
+        senha = getpass.getpass(prompt='\nDigite a senha do email a ser criptograda: ')
+        senha2 = getpass.getpass(prompt='\nConfirme a senha: ')
+
+        if senha == senha2:
+            priv_key = RSA.importKey(private_key)
+            encrypt_senha =  priv_key.encrypt(senha, 42)
+            senha_file = open(os.path.join(self.paths['export'], self.nomes['senha_email']), 'w')
+            senha_file.write(str(encrypt_senha))
+            senha_file.close()
+
+
+        else:
+            print('Voce digitou senhas diferentes. Execute novamente.')
+        return
+
+
 class Gerenciador:
     def __init__(self, paths, nomes, config_servidor):
         self.paths = paths
@@ -123,6 +182,36 @@ class Gerenciador:
                                sep=';', decimal=',')
 
         print('Resultado exportado para {}'.format(self.paths['export']))
+        return
+
+
+    def envia_email(self, config_email):
+        priv_key = RSA.importKey(private_key)
+        senha = open(os.path.join(self.paths['export'], self.nomes['senha_email']), 'r').read()
+        decrypt_msg = priv_key.decrypt(ast.literal_eval(str(senha)))
+
+        server = smtplib.SMTP(config_email['servidor'], config_email['porta'])
+        server.starttls()
+        server.login(config_email['user'], decrypt_msg)
+
+        msg = MIMEMultipart()
+        msg['Subject'] = 'Resultados GEVAZP'
+        msg['From'] = config_email['to']
+        msg['To'] = ', '.join(config_email['to'])
+        body = \
+        '''Resultados GEVAZP
+        Caminho: {}
+        
+*obs: E-mail automatico. Em caso de bugs, entre em contato com administrador'''
+
+        msg.attach(MIMEText(body.format(self.paths['decks_gevazp']), 'plain'))
+
+        # anexo
+        csv = MIMEText(file(os.path.join(self.paths['export'], 'resultados.csv')).read())
+        csv.add_header('Content-Disposition', 'attachment', filename='resultados.csv')
+        msg.attach(csv)
+        server.sendmail(config_email['from'], config_email['to'], msg.as_string())
+        server.quit()
         return
 
 
@@ -377,7 +466,8 @@ class Desenho:
                        )
 
         #  Legenda
-        cenarios = self.dados.shape[0] / 4
+        print self.config_plot
+        cenarios = self.dados.shape[0] / 4 + 1
         plt.legend(self.config_plot.texto, loc=2, title='Agrupamento de {} cenarios'.format(cenarios),
                    fancybox=True
                    )
@@ -403,7 +493,7 @@ class Desenho:
                  math.ceil(max(self.dados.loc[self.dados['submercado'] == self.par_sub[1], 'ena']) / \
                            mlt.loc[mlt['mes'] == mes, str(self.par_sub[1])].values[0])
                  ]
-        print round(lim_y[1] * 100) / 1000
+
         plt.xticks(np.arange(0, lim_x[1], round(lim_y[1] * 100) / 5000), rotation=30)
         plt.yticks(np.arange(0, lim_y[1], round(lim_x[1] * 100) / 1000))
         ticks_x = ax.get_xticks()
@@ -499,21 +589,25 @@ if __name__ == '__main__':
     import shutil
     from multiprocessing import cpu_count, Pool
     import subprocess
-    import matplotlib.ticker as ticker
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
     import matplotlib.cm as cm
     import math
-
+    import smtplib
+    from email.MIMEText import MIMEText
+    from email.mime.multipart import MIMEMultipart
+    from Crypto.PublicKey import RSA
+    import ast
+    import getpass
 
     # Configuracao -----------------------------------------------------------------------------------------------------
-    paths = {'decomp_base': r'C:\Users\anderson.visconti\Desktop\gevazp\decomp-base',
-             'decks_gevazp': r'C:\Users\anderson.visconti\Desktop\gevazp\decks_2',
-             'vazoes_gevazp': r'C:\Users\anderson.visconti\Desktop\09-gevazp',
+    paths = {'decomp_base': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\08\rv2\gevazp\decomp-base',
+             'decks_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\08\rv2\gevazp\decks_2',
+             'vazoes_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\08\rv2\gevazp',
              'executavel_gevazp': r'C:\Gevazp',
              'arquivos_gevazp': r'C:\Gevazp',
-             'export': r'C:\Users\anderson.visconti\Desktop\09-gevazp',
-             'mlt': r'C:\Users\anderson.visconti\Desktop\09-gevazp'
+             'export': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\08\rv2\gevazp',
+             'mlt': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\08\rv2\gevazp'
              }
 
     nomes = {'gevazp_exec': ['arquivos.dat', 'caso.dat', 'gevazp.dat', 'MODIF.DAT',
@@ -524,7 +618,9 @@ if __name__ == '__main__':
              'decomp_exec': ['dadger.rv0', 'hidr.dat', 'loss.dat', 'mlt.dat',
                              'vazoes.dat'
                              ],
-             'mlt':r'mlt.csv'
+             'mlt':r'mlt.csv',
+             'public_key': 'public_key.txt',
+             'senha_email': 'config.txt'
              }
 
     config_servidor = {'n_proc': 40,
@@ -539,19 +635,28 @@ if __name__ == '__main__':
                    'step': 50,
                    'sub_referencia': 1,
                    'par_subs': [1, 2],
-                   'retangulo': {'lower_left': (0.75, 0.6),
-                                 'height': 0.5,
-                                 'width': 0.30}
+                   'retangulo': {'lower_left': (0.70, 0.4),
+                                 'height': 0.7,
+                                 'width': 0.25}
                    }
-    mes = 9
+    config_email = {'to': 'anderson.visconti@enexenergia.com.br',
+                    'from': ['anderson.visconti@enexenergia.com.br',
+                             ],
+                    'servidor': 'smtp.gmail.com',
+                    'porta': 587,
+                    'user': 'anderson.visconti@enexenergia.com.br',
+                    'path_senha':r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\public_key.txt'
+                    }
 
+    mes = 8
     #  Determina se executap reparacao do ambiente gevazp ou apenas decomp - 1 para sim e 0 para nao
-
     execucao = {'ambiente': 0,
                 'gevazp': 0,
                 'decomp': 0,
                 'resultados': 0,
-                'desenho': 1
+                'desenho': 0,
+                'envia_email': 1,
+                'criptografia': 0
                 }
     # Fim Configuracao -------------------------------------------------------------------------------------------------
 
@@ -592,6 +697,16 @@ if __name__ == '__main__':
         mlt = pd.read_csv(os.path.join(paths['mlt'], nomes['mlt']), sep=';', decimal=',')
         desenho = Desenho(paths=paths, nomes=nomes ,dados=resultados, config_plot=config_plot, mlt=mlt)
         desenho.desenha_scatter(mes=mes)
+
+    if execucao['envia_email'] == 1:
+        gerenciador = Gerenciador(paths=paths, nomes=nomes, config_servidor=config_servidor)
+        gerenciador.envia_email(config_email=config_email)
+
+    if execucao['criptografia'] == 1:
+        cripto = Criptografia(paths=paths, nomes=nomes)
+        cripto.gerar_chave_publica()
+        cripto.gerar_senha()
+        pass
 
     print('Fim')
     pass
