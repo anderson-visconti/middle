@@ -1,32 +1,38 @@
 def config_ons(flag_escala='s'):
     cores_ons = [(255.0 / 255.0, 255.0 / 255.0, 255.0 / 255.0),
-                 (225.0 / 255.0, 255.0 / 255.0, 255.0 / 255.0),
-                 (180.0 / 255.0, 240.0 / 255.0, 250.0 / 255.0),
-                 (40.0 / 255.0, 130.0 / 255.0, 240.0 / 255.0),
-                 (20.0 / 255.0, 100.0 / 255.0, 210.0 / 255.0),
-                 (103.0 / 255.0, 254.0 / 255.0, 133.0 / 255.0),
-                 (24.0 / 255.0, 215.0 / 255.0, 6.0 / 255.0),
-                 (30.0 / 255.0, 180.0 / 255.0, 30.0 / 255.0),
-                 (255.0 / 255.0, 232.0 / 255.0, 120.0 / 255.0),
-                 (255.0 / 255.0, 192.0 / 255.0, 60.0 / 255.0),
-                 (255.0 / 255.0, 96.0 / 255.0, 0.0 / 255.0),
-                 (225.0 / 255.0, 20.0 / 255.0, 0.0 / 255.0),
-                 (251.0 / 255.0, 94.0 / 255.0, 107.0 / 255.0),
-                 (170.0 / 255.0, 170.0 / 255.0, 170.0 / 255.0)]  # Escala de cores ONS
+             (225.0 / 255.0, 255.0 / 255.0, 255.0 / 255.0),
+             (180.0 / 255.0, 240.0 / 255.0, 250.0 / 255.0),
+             (40.0 / 255.0, 130.0 / 255.0, 240.0 / 255.0),
+             (20.0 / 255.0, 100.0 / 255.0, 210.0 / 255.0),
+             (103.0 / 255.0, 254.0 / 255.0, 133.0 / 255.0),
+             (24.0 / 255.0, 215.0 / 255.0, 6.0 / 255.0),
+             (30.0 / 255.0, 180.0 / 255.0, 30.0 / 255.0),
+             (255.0 / 255.0, 232.0 / 255.0, 120.0 / 255.0),
+             (255.0 / 255.0, 192.0 / 255.0, 60.0 / 255.0),
+             (255.0 / 255.0, 96.0 / 255.0, 0.0 / 255.0),
+             (225.0 / 255.0, 20.0 / 255.0, 0.0 / 255.0),
+             (251.0 / 255.0, 94.0 / 255.0, 107.0 / 255.0),
+             (170.0 / 255.0, 170.0 / 255.0, 170.0 / 255.0)]  # Escala de cores ONS
 
     if flag_escala == 'm':
-        levels = [5, 10, 20, 40, 60, 80, 100, 150, 200, 250, 300, 350, 400]  # niveis para chuva
+        levels = [5, 10, 20, 40, 60, 80, 100, 150, 200, 250, 300, 350, 400]  # Niveis para chuva
         cores = cores_ons
 
     if flag_escala == 's':
-        levels = [1, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200]  # niveis para chuva
+        levels = [1, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200]  # Niveis para chuva
         cores = cores_ons
 
-    if flag_escala == 'c':
-        # levels = [-100, -80, -60, -40, -20, 0, 20, 40, 60, 80, 100, 120] # niveis para climatologia
-        levels = np.arange(start=-200, stop=225, step=25)  # niveis para climatologia
+    if flag_escala == 'cm':
+        levels = [-250, -200, -150, -100, -75, -50,  -25, -10, 10, 25, 50, 75, 100, 150, 200, 250] # Niveis para climatologia
         cores = 'seismic_r'
-        # .get_cmap('seismic')
+
+    if flag_escala == 'cs':
+        levels = [-100, -75, -50, -40, -30, -20, -10, 10, 20, 30, 40, 50, 75, 100] # Niveis para climatologia
+        cores = 'seismic_r'
+
+    if flag_escala == 'per':
+        levels = [-100, -75, -50, -35, -25, -15, -5, 5, 15, 25, 35, 50, 75, 100]
+        cores = 'seismic_r'
 
     return levels, cores
 
@@ -37,6 +43,7 @@ def make_map(lons, lats, paths, nomes, dados, periodo, flag_escala, precip_clima
     # Interpolacao
     interpolacao = interp(datain=precip_clima, xin=lons_clima, yin=np.flipud(lats_clima), xout=x, yout=np.flipud(y))
     anomalia = (dados - interpolacao)
+    porcentagem = ((dados / interpolacao) - 1)*100
 
     #  Modelo CFSv2
     fig = plt.figure()
@@ -53,12 +60,13 @@ def make_map(lons, lats, paths, nomes, dados, periodo, flag_escala, precip_clima
     m.drawcoastlines(linewidth=0.5)
     m.drawrivers(linewidth=0.25)
 
+
     #  Desenha estados do Brasil
     shp = m.readshapefile(os.path.join(paths['shape_estados'], nomes['shape_estados']), 'states',
                           drawbounds=True, linewidth=0.5)
 
     xx, yy = m(x, y)
-    levels, cores = config_ons(flag_escala)
+    levels, cores = config_ons(flag_escala=flag_escala['escala'])
 
     cs = m.contourf(xx, yy, dados, levels=levels, colors=cores, extend='both', alpha=0.90)
     cbar = m.colorbar(cs, location='bottom', label='Preciptacao [mm]')
@@ -80,7 +88,57 @@ def make_map(lons, lats, paths, nomes, dados, periodo, flag_escala, precip_clima
                                                                                       )),
                 bbox_inches='tight')
 
+
+
     #  Anomalia
+
+    fig = plt.figure()
+    #  Subplot 1
+    m = Basemap(projection='merc',
+                llcrnrlat=lats.min(),
+                urcrnrlat=lats.max(),
+                llcrnrlon=lons.min(),
+                urcrnrlon=lons.max(),
+                resolution='l',
+                )
+    m.drawmapboundary()
+    m.drawcountries()
+    m.drawcoastlines(linewidth=0.5)
+    m.drawrivers(linewidth=0.25)
+
+
+
+    #  Desenha estados do Brasil
+    shp = m.readshapefile(os.path.join(paths['shape_estados'], nomes['shape_estados']), 'states',
+                          drawbounds=True, linewidth=0.5)
+
+    xx, yy = m(x, y)
+    levels, cores = config_ons(flag_escala['escala_clima'])
+    cs = m.contourf(xx, yy, anomalia, levels=levels, cmap='bwr_r', extend='both', alpha=0.90)
+
+    cbar = m.colorbar(cs, location='bottom', label='Anomalia [mm]')
+    cbar.set_ticks(levels)
+    cbar.ax.tick_params(labelsize=6)
+    s = '''Anomalia CFSv2 - Rodada {}
+        Periodo: {:%Y-%m-%d} a {:%Y-%m-%d}'''
+    plt.title(s.format(nomes['chuva'][9:17], periodo['de'], periodo['ate']))
+
+    #  Informacao da empresa
+    im = plt.imread(fname=os.path.join(paths['logo'], nomes['nome_logo']))
+    newax = fig.add_axes([0.59, 0.16, 0.2, 0.2], anchor='SE', zorder=+1)
+    newax.imshow(im, alpha=0.8)
+    newax.axis('off')
+
+    plt.savefig(os.path.join(paths['export'], 'Anomalia_{}_{:%Y-%m-%d}_{:%Y-%m-%d}.png'.format(nomes['chuva'][0:19],
+                                                                                      periodo['de'],
+                                                                                      periodo['ate']
+                                                                                      )),
+                bbox_inches='tight')
+
+
+
+
+    #    Anomalia em Porcentagem
 
     fig = plt.figure()
     #  Subplot 1
@@ -101,14 +159,14 @@ def make_map(lons, lats, paths, nomes, dados, periodo, flag_escala, precip_clima
                           drawbounds=True, linewidth=0.5)
 
     xx, yy = m(x, y)
-    levels, cores = config_ons('c')
-    cs = m.contourf(xx, yy, anomalia, levels=levels, cmap='bwr_r', extend='both', alpha=0.90)
+    levels, cores = config_ons(flag_escala = "per")
+    cs = m.contourf(xx, yy, porcentagem, levels=levels, cmap='bwr_r', extend='both', alpha=0.90)
 
-    cbar = m.colorbar(cs, location='bottom', label='Anomalia [mm]')
+    cbar = m.colorbar(cs, location='bottom', label='Anomalia Relativa [%]')
     cbar.set_ticks(levels)
     cbar.ax.tick_params(labelsize=6)
-    s = '''Anomalia CFSv2 - Rodada {}
-        Periodo: {:%Y-%m-%d} a {:%Y-%m-%d}'''
+    s = '''Anomalia Relativa CFSv2 - Rodada {}
+            Periodo: {:%Y-%m-%d} a {:%Y-%m-%d}'''
     plt.title(s.format(nomes['chuva'][9:17], periodo['de'], periodo['ate']))
 
     #  Informacao da empresa
@@ -117,11 +175,13 @@ def make_map(lons, lats, paths, nomes, dados, periodo, flag_escala, precip_clima
     newax.imshow(im, alpha=0.8)
     newax.axis('off')
 
-    plt.savefig(os.path.join(paths['export'], 'Anomalia_{}_{:%Y-%m-%d}_{:%Y-%m-%d}.png'.format(nomes['chuva'][0:19],
+    plt.savefig(os.path.join(paths['export'], 'Anomalia_Porcentagem_{}_{:%Y-%m-%d}_{:%Y-%m-%d}.png'.format(nomes['chuva'][0:19],
                                                                                                periodo['de'],
                                                                                                periodo['ate']
                                                                                                )),
                 bbox_inches='tight')
+
+    # Retornar os tres tipos de mapas
 
     print('Encerramento da criacao do mapa')
     return fig
@@ -133,27 +193,27 @@ def loop_mapa(paths, nomes, variaveis, periodo, sub_set, flag_escala):
     import numpy as np
     import pandas as pd
 
-
     for i in periodo.keys():
         periodo[i] = pd.to_datetime(periodo[i])
 
 
-        # Abre arquivos Netcdf
+    # Abre arquivos Netcdf
     file_chuva = Dataset(os.path.join(paths['chuva'], nomes['chuva']), 'r')
-    file_clima = Dataset(r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Climatologia\precip.mon.ltm.nc', 'r')
+    file_clima = Dataset(os.path.join(paths['climatologia'], nomes['climatologia']), 'r')
+
 
     #  Dados chuva
     lons = file_chuva.variables[variaveis['csfv2'].get('lon')][:]
     lats = file_chuva.variables[variaveis['csfv2'].get('lat')][:]
     times = num2date(file_chuva.variables[variaveis['csfv2'].get('time')][:],
-                     file_chuva.variables[variaveis['csfv2'].get('time')].units)
+                    file_chuva.variables[variaveis['csfv2'].get('time')].units)
 
     #  Dados Climatologia
     lons_clima = file_clima.variables[variaveis['climatologia'].get('lon')][:]
     lats_clima = file_clima.variables[variaveis['climatologia'].get('lat')][:]
     times_clima = num2date(times=file_clima.variables[variaveis['climatologia'].get('time')][:],
-                           units=file_clima.variables[variaveis['climatologia'].get('time')].units,
-                           calendar='gregorian')
+                     units=file_clima.variables[variaveis['climatologia'].get('time')].units,
+                     calendar='Julian')
 
     data_ini = periodo['de']
     data_fim = periodo['ate']
@@ -182,10 +242,13 @@ def loop_mapa(paths, nomes, variaveis, periodo, sub_set, flag_escala):
         aux = precip_clima[i.month - 1, lats_inds_clima, lons_inds_clima]
         p = np.sum([p, aux], axis=0)
 
+
     fig = make_map(lons=lons, lats=lats, paths=paths, nomes=nomes, dados=precip_chuva.sum(axis=0), periodo=periodo,
                    flag_escala=flag_escala, precip_clima=p, lons_clima=lons_clima, lats_clima=lats_clima)
 
+
     return
+
 
 if __name__ == '__main__':
     import os
@@ -194,9 +257,9 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import pandas as pd
 
-    paths = {'chuva': r'C:\Users\alessandra.marques\Desktop\netcdf',
-             'climatologia': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Climatologia\precip.mon.ltm.nc',
-             'export': r'C:\Users\alessandra.marques\Desktop\export',
+    paths = {'chuva': r'C:\Users\anderson.visconti\Desktop\netcdf',
+             'climatologia': r'C:\Onedrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Climatologia',
+             'export': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Base de Figuras\Cfsv2\2017051000',
              'shape_estados': r'C:\OneDrive\Middle Office\Middle\Hidrologia\ShapeFiles\brasil',
              'logo': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Chuva-Vazao\Previsao precipitacao conjunto'
              }
@@ -206,34 +269,39 @@ if __name__ == '__main__':
                            'time': 'time',
                            'precip': 'prate'},
 
-                 'climatologia': {'lon': 'lon',
-                                  'lat': 'lat',
-                                  'time': 'time',
-                                  'precip': 'precip'},
+                'climatologia': {'lon': 'lon',
+                                 'lat': 'lat',
+                                 'time': 'time',
+                                 'precip': 'precip'},
 
-                 'clima': {'lon': 'lon',
-                           'lat': 'lat',
-                           'time': 'time',
-                           'precip': 'precip'}}
+                'clima': {'lon': 'lon',
+                          'lat': 'lat',
+                          'time': 'time',
+                          'precip': 'precip'}}
 
-    nomes = {'chuva': r'prate.02.2017071800.daily.nc',
+    nomes = {'chuva': r'prate.01.2017051000.daily.nc',
              'climatologia': r'precip.mon.ltm.nc',
              'shape_estados': r'BRA_adm1',
              'nome_logo': 'logo.png'}
 
     # unit - 'd' para dias e 'MS' para meses
-    step = {'n_periodos': 3,
-            'step': 1,
-            'unit': 'MS'
+    step = {'n_periodos': 9,
+            'step': 7,
+            'unit': 'd'
             }
 
-    #  's' - escala semanal, 'm' - escala mensal, 'c' - climatologia(Anomalia)
-    flag_escala = {'escala': 'm'}
+    #  's' - escala semanal,
+    #  'm' - escala mensal,
+    #  'cm' - climatologia mensal,
+    #  'cs' - climatologia semanal.
+    flag_escala = {'escala': 's',
+                   'escala_clima': 'cs'}
+
 
     sub_set = {'lon': [285, 330],
                'lat': [-35.0, 5.5]
                }
-    data_inicial = '2017-07-22'
+    data_inicial = '2017-05-13'
     loop = pd.DataFrame(data=pd.date_range(data_inicial,
                                            periods=step['n_periodos'],
                                            freq='{}{}'.format(step['step'],
@@ -255,8 +323,8 @@ if __name__ == '__main__':
                   variaveis=variaveis,
                   periodo={'de': i[1]['data_inicial'], 'ate': i[1]['data_final']},
                   sub_set=sub_set,
-                  flag_escala=flag_escala['escala']
+                  flag_escala=flag_escala
                   )
 
-    print('Fim Script')
 
+    print('Fim Script')
