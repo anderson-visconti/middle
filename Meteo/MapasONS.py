@@ -13,7 +13,7 @@ def importa_dados(full_path, cols):
     return df_dados
 
 def make_map(dados, file_config, nome_modelo, datas):
-    fig, ax = plt.subplots()
+    fig = plt.figure()
     m = Basemap(projection='merc',
                 llcrnrlat=-35,
                 urcrnrlat=9.0,
@@ -50,8 +50,8 @@ def make_map(dados, file_config, nome_modelo, datas):
                                                                                    nome_modelo)),
                 bbox_inches='tight'
                 )
-
-    return fig
+    plt.close('all')
+    return
 
 def get_config_ons(flag='s'):
     if flag == 's':
@@ -91,12 +91,12 @@ if __name__ == '__main__':
             'GESF':r'C:\OneDrive\Middle Office\Middle\Hidrologia\Relatorios\Chuva\GESF'
             }
 
-    datas = {'data_inicial': '2017-08-07',
-                    'de': '2017-08-12',
-                    'ate': '2017-08-18'
-                    }
+    datas = {'data_inicial': '2017-08-08',
+             'de': '2017-08-08',
+             'ate': '2017-08-18'
+            }
 
-    file_config = {'path_export': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Base de Figuras\Conjunto\20170807',
+    file_config = {'path_export': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Base de Figuras\Conjunto\20170808',
                    'path_logo':r'C:\OneDrive\Middle Office\Middle\Hidrologia\Base de Figuras',
                    'nome_logo':r'Logo.png',
                    'path_shape_file':r'C:\OneDrive\Middle Office\Middle\Hidrologia\ShapeFiles\brasil',
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     df_precip_eta = pd.DataFrame()
     df_precip_gesf = pd.DataFrame()
     df_dados_aux = pd.DataFrame()
-
+    df_dados_gesf_aux = pd.DataFrame()
     #  Importa dados de chuva
     for i in path.keys():
         # lista arquivos
@@ -122,21 +122,26 @@ if __name__ == '__main__':
 
         if i == 'GESF':
             for j in files:
-                df_dados_aux = importa_dados(full_path=j, cols=['lon', 'lat', 'precip'])
-                df_precip_gesf = pd.concat(objs=[df_precip_eta, df_dados_aux])
+                df_dados_gesf_aux = importa_dados(full_path=j, cols=['lon', 'lat', 'precip'])
+                df_precip_gesf = pd.concat(objs=[df_precip_gesf, df_dados_gesf_aux])
 
 
     # Filtrando datas
     eta_slice = pd.DataFrame(df_precip_eta.loc[datas['de']:datas['ate']])
-    gesf_slice = pd.DataFrame(df_precip_gesf.loc[datas['de']: datas['ate']])
+    gesf_slice = pd.DataFrame(df_precip_gesf.loc[datas['de']:datas['ate']])
 
+    #eta_slice = eta_slice.loc[(slice(None), -54.6, -27.0), :]
     eta_soma =pd.DataFrame(eta_slice.groupby(by=['lon', 'lat']).sum())
     gesf_soma =pd.DataFrame(gesf_slice.groupby(by=['lon', 'lat']).sum())
 
     eta_soma.to_csv(os.path.join(file_config['path_export'], 'eta_soma.csv'), sep=';', decimal=',')
     eta_slice.to_csv(os.path.join(file_config['path_export'], 'eta_diario.csv'), sep=';', decimal=',')
-    fig = make_map(dados=gesf_soma, file_config=file_config, nome_modelo='GESF', datas=datas)
-    fig = make_map(dados=eta_soma, file_config=file_config, nome_modelo='ETA', datas=datas)
+    gesf_soma.to_csv(os.path.join(file_config['path_export'], 'gesf_soma.csv'), sep=';', decimal=',')
+    gesf_slice.to_csv(os.path.join(file_config['path_export'], 'gesf_diario.csv'), sep=';', decimal=',')
+
+    #  Criacao de figuras
+    make_map(dados=gesf_soma, file_config=file_config, nome_modelo='GESF', datas=datas)
+    make_map(dados=eta_soma, file_config=file_config, nome_modelo='ETA', datas=datas)
 
     print('FIM')
     pass
