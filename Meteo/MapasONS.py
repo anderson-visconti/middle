@@ -1,15 +1,15 @@
 # -*- coding: iso-8859-1 -*-
 def importa_dados(full_path, cols):
-    df_dados = pd.read_fwf(filepath_or_buffer=full_path,
+    df_dados = pd.read_csv(filepath_or_buffer=full_path,
+                           #colspecs=[(0, 6), (8, )]
                            delim_whitespace=True,
-                           decimal=',',
+                           decimal='.',
                            names=cols
                            )
 
     df_dados['data'] = pd.to_datetime(full_path[-10:-4], format='%d%m%y') - pd.to_timedelta(arg=1, unit='D')
 
     df_dados.set_index(['data', 'lon', 'lat'], inplace=True)
-
     return df_dados
 
 def make_map(dados, file_config, nome_modelo, datas):
@@ -82,7 +82,6 @@ if __name__ == '__main__':
     import numpy as np
     from mpl_toolkits.basemap import Basemap
     import matplotlib.pyplot as plt
-    from matplotlib.patches import Polygon
     import os
     import glob
 
@@ -91,18 +90,17 @@ if __name__ == '__main__':
             'GESF':r'C:\OneDrive\Middle Office\Middle\Hidrologia\Relatorios\Chuva\GESF'
             }
 
-    datas = {'data_inicial': '2017-08-08',
-             'de': '2017-08-08',
+    datas = {'data_inicial': '2017-08-09',
+             'de': '2017-08-12',
              'ate': '2017-08-18'
             }
 
-    file_config = {'path_export': r'C:\OneDrive\Middle Office\Middle\Hidrologia\Base de Figuras\Conjunto\20170808',
+    file_config = {'path_export':r'C:\OneDrive\Middle Office\Middle\Hidrologia\Base de Figuras\Conjunto\20170809',
                    'path_logo':r'C:\OneDrive\Middle Office\Middle\Hidrologia\Base de Figuras',
                    'nome_logo':r'Logo.png',
                    'path_shape_file':r'C:\OneDrive\Middle Office\Middle\Hidrologia\ShapeFiles\brasil',
                    'nome_shape_file':r'BRA_adm1'
                    }
-
 
     for i in datas.keys():
         datas[i] = pd.to_datetime(datas[i])
@@ -111,6 +109,7 @@ if __name__ == '__main__':
     df_precip_gesf = pd.DataFrame()
     df_dados_aux = pd.DataFrame()
     df_dados_gesf_aux = pd.DataFrame()
+
     #  Importa dados de chuva
     for i in path.keys():
         # lista arquivos
@@ -130,10 +129,9 @@ if __name__ == '__main__':
     eta_slice = pd.DataFrame(df_precip_eta.loc[datas['de']:datas['ate']])
     gesf_slice = pd.DataFrame(df_precip_gesf.loc[datas['de']:datas['ate']])
 
-    #eta_slice = eta_slice.loc[(slice(None), -54.6, -27.0), :]
+
     eta_soma =pd.DataFrame(eta_slice.groupby(by=['lon', 'lat']).sum())
     gesf_soma =pd.DataFrame(gesf_slice.groupby(by=['lon', 'lat']).sum())
-
     eta_soma.to_csv(os.path.join(file_config['path_export'], 'eta_soma.csv'), sep=';', decimal=',')
     eta_slice.to_csv(os.path.join(file_config['path_export'], 'eta_diario.csv'), sep=';', decimal=',')
     gesf_soma.to_csv(os.path.join(file_config['path_export'], 'gesf_soma.csv'), sep=';', decimal=',')
