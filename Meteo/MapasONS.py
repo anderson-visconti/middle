@@ -38,7 +38,7 @@ def make_map(dados, file_config, nome_modelo, datas):
     s = '''Modelo {} - Rodada {:%d-%m-%Y}
             Periodo de {:%d-%m-%Y} a {:%d-%m-%Y}'''
     plt.title(s.format(nome_modelo, datas['data_inicial'], datas['de'], datas['ate']))
-    cs = m.contourf(xx, yy, precip.values, levels=levels, colors=cores_ons, extend='both')
+    cs = plt.contourf(xx, yy, precip.values, levels=levels, colors=cores_ons, extend='both')
     cbar = m.colorbar(cs, location='bottom', label='Preciptacao [mm]')
     cbar.set_ticks(levels)
     cbar.ax.tick_params(labelsize=8)
@@ -90,12 +90,12 @@ if __name__ == '__main__':
             'GESF':r'C:\OneDrive\Middle Office\Middle\Hidrologia\Relatorios\Chuva\GESF'
             }
 
-    datas = {'data_inicial': '2017-08-09',
+    datas = {'data_inicial': '2017-08-10',
              'de': '2017-08-12',
              'ate': '2017-08-18'
             }
 
-    file_config = {'path_export':r'C:\OneDrive\Middle Office\Middle\Hidrologia\Base de Figuras\Conjunto\20170809',
+    file_config = {'path_export':r'C:\OneDrive\Middle Office\Middle\Hidrologia\Base de Figuras\Conjunto\20170810',
                    'path_logo':r'C:\OneDrive\Middle Office\Middle\Hidrologia\Base de Figuras',
                    'nome_logo':r'Logo.png',
                    'path_shape_file':r'C:\OneDrive\Middle Office\Middle\Hidrologia\ShapeFiles\brasil',
