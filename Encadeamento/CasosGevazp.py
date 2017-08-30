@@ -196,7 +196,7 @@ class Gerenciador:
 
         msg = MIMEMultipart()
         msg['Subject'] = 'Resultados GEVAZP'
-        msg['From'] = config_email['to']
+        msg['From'] = config_email['from']
         msg['To'] = ', '.join(config_email['to'])
         body = \
         '''Resultados GEVAZP
@@ -435,11 +435,11 @@ class Desenho:
 
     def desenha_scatter(self, mes):
         subsistemas = ['SE', 'S', 'NE', 'N']
-        fig = plt.figure(figsize=(13, 7))
+        fig = plt.figure(figsize=(14, 7))
         ax = fig.add_subplot(111)
         self.dados = pd.DataFrame(self.dados)
         self.dados['ena'] = self.dados['ena'].apply(lambda x: float(x))
-        colors = cm.hsv(np.linspace(0, 1, self.config_plot.shape[0]))
+        colors = cm.jet(np.linspace(0, 0.90, self.config_plot.shape[0]))
         self.config_plot['texto'] = self.config_plot.apply(lambda x: '{} >= pld < {}'.format(x['inferior'],
                                                                                              x['superior']
                                                                                              ), axis=1
@@ -465,7 +465,7 @@ class Desenho:
                        c=colors[i[0]]
                        )
 
-        #  Legenda        
+        #  Legenda
         cenarios = self.dados.shape[0] / 4 + 1
         plt.legend(self.config_plot.texto, loc=2, title='Agrupamento de {} cenarios'.format(cenarios),
                    fancybox=True
@@ -476,9 +476,11 @@ class Desenho:
         plt.xlabel(s='{} [%MLT]'.format(subsistemas[self.par_sub[0] - 1]))
         plt.ylabel(s='{} [%MLT]'.format(subsistemas[self.par_sub[1] - 1]))
         plt.tick_params(axis='both', which='major', labelsize=7)
+
         #tick_x = ticker.ScalarFormatter(0.2)
         #ax.xaxis.set_major_locator(ticker.ScalarFormatter(0.2))
         #ax.yaxis.set_major_locator(ticker.ScalarFormatter(0.2))
+
         lim_x = [round(min(self.dados.loc[self.dados['submercado'] == self.referencia, 'ena']) / \
                  mlt.loc[mlt['mes'] == mes, str(self.par_sub[0])].values[0], 1),
 
@@ -529,7 +531,7 @@ class Desenho:
                     )
 
         # Salva figura
-        plt.savefig(os.path.join(self.paths['export'], 'resultados.png'))
+        plt.savefig(os.path.join(self.paths['export'], 'resultados.png'), bbox_inches='tight')
         return
 
 
@@ -600,13 +602,13 @@ if __name__ == '__main__':
     import getpass
 
     # Configuracao -----------------------------------------------------------------------------------------------------
-    paths = {'decomp_base': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\08\rv2\gevazp\decomp-base',
-             'decks_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\08\rv2\gevazp\decks_2',
-             'vazoes_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\08\rv2\gevazp',
-             'executavel_gevazp': r'C:\Gevazp',
+    paths = {'decomp_base': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10\decomp_base',
+             'decks_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10\decks',
+             'vazoes_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10\gevazp_base',
+             'executavel_gevazp': r'C:\Gevazp\gevazp',
              'arquivos_gevazp': r'C:\Gevazp',
-             'export': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\08\rv2\gevazp',
-             'mlt': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\08\rv2\gevazp'
+             'export': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10\resultados',
+             'mlt': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10'
              }
 
     nomes = {'gevazp_exec': ['arquivos.dat', 'caso.dat', 'gevazp.dat', 'MODIF.DAT',
@@ -629,26 +631,26 @@ if __name__ == '__main__':
                        'lic_decomp': r'deco.prm'
                        }
 
-    config_plot = {'valor_inicial': 100,
-                   'n_classes': 10,
-                   'step': 50,
+    config_plot = {'valor_inicial': 200,
+                   'n_classes': 9,
+                   'step': 40,
                    'sub_referencia': 1,
                    'par_subs': [1, 2],
-                   'retangulo': {'lower_left': (0.70, 0.4),
-                                 'height': 0.7,
-                                 'width': 0.25}
+                   'retangulo': {'lower_left': (0.75, 0.60),
+                                 'height': 0.50,
+                                 'width': 0.30}
                    }
-    config_email = {'to': 'anderson.visconti@enexenergia.com.br',
-                    'from': ['anderson.visconti@enexenergia.com.br',
+    config_email = {'from': 'multivac.gerenciador@gmail.com',
+                    'to': ['multivac.gerenciador@gmail.com',
+                           'anderson.visconti@enexenergia.com.br'
                              ],
                     'servidor': 'smtp.gmail.com',
                     'porta': 587,
-                    'user': 'anderson.visconti@enexenergia.com.br',
-                    'path_senha':r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\public_key.txt'
+                    'user': 'multivac.gerenciador@gmail.com'
                     }
 
-    mes = 8
-    #  Determina se executap reparacao do ambiente gevazp ou apenas decomp - 1 para sim e 0 para nao
+    mes = 10
+    #  Determina se executap preparacao do ambiente gevazp ou apenas decomp - 1 para sim e 0 para nao
     execucao = {'ambiente': 0,
                 'gevazp': 0,
                 'decomp': 0,
