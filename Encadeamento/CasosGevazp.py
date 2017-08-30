@@ -504,7 +504,7 @@ class Desenho:
 
         # Insere grade
         ax.grid(True, linestyle='--', alpha=0.85)
-        plt.title('Matriz de Precos {} - Gevazp'.format(subsistemas[self.referencia - 1]))
+        plt.title('Matriz de Precos {} - Gevazp - Mes {}'.format(subsistemas[self.referencia - 1], mes))
 
 
         #  Desenha retangulo
@@ -602,13 +602,14 @@ if __name__ == '__main__':
     import getpass
 
     # Configuracao -----------------------------------------------------------------------------------------------------
-    paths = {'decomp_base': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10\decomp_base',
-             'decks_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10\decks',
-             'vazoes_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10\gevazp_base',
+    mes = 11
+    paths = {'decomp_base': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\11\decomp_base',
+             'decks_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\11\decks',
+             'vazoes_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\11\gevazp_base',
              'executavel_gevazp': r'C:\Gevazp\gevazp',
              'arquivos_gevazp': r'C:\Gevazp',
-             'export': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10\resultados',
-             'mlt': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10'
+             'export': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\11\export_1',
+             'mlt': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\11'
              }
 
     nomes = {'gevazp_exec': ['arquivos.dat', 'caso.dat', 'gevazp.dat', 'MODIF.DAT',
@@ -636,8 +637,8 @@ if __name__ == '__main__':
                    'step': 40,
                    'sub_referencia': 1,
                    'par_subs': [1, 2],
-                   'retangulo': {'lower_left': (0.75, 0.60),
-                                 'height': 0.50,
+                   'retangulo': {'lower_left': (0.75, 0.30),
+                                 'height': 0.30,
                                  'width': 0.30}
                    }
     config_email = {'from': 'multivac.gerenciador@gmail.com',
@@ -649,14 +650,14 @@ if __name__ == '__main__':
                     'user': 'multivac.gerenciador@gmail.com'
                     }
 
-    mes = 10
+
     #  Determina se executap preparacao do ambiente gevazp ou apenas decomp - 1 para sim e 0 para nao
     execucao = {'ambiente': 0,
                 'gevazp': 0,
                 'decomp': 0,
                 'resultados': 0,
-                'desenho': 0,
-                'envia_email': 1,
+                'desenho': 1,
+                'envia_email': 0,
                 'criptografia': 0
                 }
     # Fim Configuracao -------------------------------------------------------------------------------------------------
