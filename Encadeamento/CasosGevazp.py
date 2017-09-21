@@ -435,11 +435,11 @@ class Desenho:
 
     def desenha_scatter(self, mes):
         subsistemas = ['SE', 'S', 'NE', 'N']
-        fig = plt.figure(figsize=(16, 9))
+        fig = plt.figure(figsize=(13, 7))
         ax = fig.add_subplot(111)
         self.dados = pd.DataFrame(self.dados)
+        colors = cm.jet(np.linspace(0, 0.9, self.config_plot.shape[0]))
         self.dados['ena'] = self.dados['ena'].apply(lambda x: float(x))
-        colors = cm.jet(np.linspace(0, 0.90, self.config_plot.shape[0]))
         self.config_plot['texto'] = self.config_plot.apply(lambda x: '{} >= pld < {}'.format(x['inferior'],
                                                                                              x['superior']
                                                                                              ), axis=1
@@ -453,18 +453,21 @@ class Desenho:
                                )
 
             aux = self.dados.loc[self.dados['cenario'].isin(aux['cenario'].values)]
-
             x = aux.loc[aux['submercado'] == self.par_sub[0], 'ena'].values / \
                 mlt.loc[mlt['mes'] == mes, str(self.par_sub[0])].values[0]
 
             y = aux.loc[aux['submercado'] == self.par_sub[1], 'ena'].values / \
                 mlt.loc[mlt['mes'] == mes, str(self.par_sub[1])].values[0]
 
+            #ax.scatter(x=x,
+            #           y=y,
+            #           c=colors[i[0]]
+            #           )
             ax.scatter(x=x,
                        y=y,
-                       c=colors[i[0]]
-                       )
-
+                       c=colors[i[0]],
+                       alpha=1.0
+                   )
         #  Legenda
         cenarios = self.dados.shape[0] / 4 + 1
         plt.legend(self.config_plot.texto, loc=2, title='Agrupamento de {} cenarios'.format(cenarios),
@@ -495,8 +498,8 @@ class Desenho:
                            mlt.loc[mlt['mes'] == mes, str(self.par_sub[1])].values[0])
                  ]
 
-        plt.xticks(np.arange(0, lim_x[1], round(lim_y[1] * 100) / 5000), rotation=30)
-        plt.yticks(np.arange(0, lim_y[1], round(lim_x[1] * 100) / 1000))
+        #plt.xticks(np.arange(0, lim_x[1], round(lim_y[1] * 100) / 5000), rotation=30)
+        #plt.yticks(np.arange(0, lim_y[1], round(lim_x[1] * 100) / 1000))
         ticks_x = ax.get_xticks()
         ticks_y = ax.get_yticks()
         ax.set_xticklabels(['{:3.0f}%'.format(x * 100) for x in ticks_x])
@@ -505,7 +508,6 @@ class Desenho:
         # Insere grade
         ax.grid(True, linestyle='--', alpha=0.85)
         plt.title('Matriz de Precos {} - Gevazp - Mes {}'.format(subsistemas[self.referencia - 1], mes))
-
 
         #  Desenha retangulo
         ax.add_patch(patches.Rectangle(xy=self.retangulo['lower_left'],
@@ -524,10 +526,11 @@ class Desenho:
                     color='r',
                     weight='bold',
                     arrowprops=dict(facecolor='r', edgecolor='r'),
-                    xytext=(self.retangulo['lower_left'][0] + self.retangulo['width'] + 0.3,
-                            self.retangulo['lower_left'][1] + self.retangulo['height'] + 0.3
+                    xytext=(self.retangulo['lower_left'][0] + self.retangulo['width'] + 0.1,
+                            self.retangulo['lower_left'][1] + self.retangulo['height'] + 0.5
                             ),
-                    fontsize=14
+                    fontsize=14,
+                    alpha=0.80
                     )
 
         # Salva figura
@@ -537,7 +540,7 @@ class Desenho:
 
     def desenha_scatter_ena_bruta(self, mes):
         subsistemas = ['SE', 'S', 'NE', 'N']
-        fig = plt.figure(figsize=(16, 9))
+        fig = plt.figure(figsize=(13, 7))
         ax = fig.add_subplot(111)
         self.dados = pd.DataFrame(self.dados)
 
@@ -558,9 +561,7 @@ class Desenho:
             aux = self.dados.loc[self.dados['cenario'].isin(aux['cenario'].values)]
 
             x = aux.loc[aux['submercado'] == self.par_sub[0], 'ena'].values
-
             y = aux.loc[aux['submercado'] == self.par_sub[1], 'ena'].values
-
             ax.scatter(x=x,
                        y=y,
                        c=colors[i[0]]
@@ -598,10 +599,147 @@ class Desenho:
         ax.grid(True, linestyle='--', alpha=0.85)
         plt.title('Matriz de Precos {} - Gevazp - Mes {}'.format(subsistemas[self.referencia - 1], mes))
 
+        ax.annotate('Intervalo confianca',
+                    xy=(self.retangulo['lower_left'][0] + self.retangulo['width'],
+                        self.retangulo['lower_left'][1] + self.retangulo['height']
+                        ),
+                    color='r',
+                    weight='bold',
+                    arrowprops=dict(facecolor='r', edgecolor='r'),
+                    xytext=(self.retangulo['lower_left'][0] + self.retangulo['width'] + 0.2,
+                            self.retangulo['lower_left'][1] + self.retangulo['height'] + 0.2
+                            ),
+                    fontsize=14
+                    )
         # Salva figura
         plt.savefig(os.path.join(self.paths['export'], 'resultados_bruto.png'), bbox_inches='tight')
         pass
         return
+
+
+    def desenha_scatter_seaborn(self, mes):
+        subsistemas = ['SE', 'S', 'NE', 'N']
+        self.dados = pd.DataFrame(self.dados)
+        self.dados['ena'] = self.dados['ena'].apply(lambda x: float(x))
+        self.config_plot['texto'] = self.config_plot.apply(lambda x: '{} >= pld < {}'.format(x['inferior'],
+                                                                                             x['superior']
+                                                                                             ), axis=1
+                                                           )
+        self.dados['group'] = -1
+        # itera classificando nos ranges definidos
+        for i in self.config_plot.iterrows():
+            aux = self.dados.loc[(self.dados['preco'] >= i[1].inferior) &
+                                              (self.dados['preco'] < i[1].superior) &
+                                              (self.dados['submercado'] == self.referencia), :
+                                ]['cenario']
+
+            self.dados.loc[self.dados['cenario'].isin(aux), ['group']] = i[1].texto
+
+        # remove cenarios nao classificados e subsistemas que nao se deseja plotar
+        self.dados = self.dados.loc[self.dados['submercado'].isin(self.par_sub), :]
+        self.dados = pd.DataFrame(self.dados.loc[self.dados['group'] != -1, :])
+
+        # cria coluna com ena percentual
+        self.dados['ena_p'] = 0
+
+        # calcula ena percentual subsistema de referencia
+        aux = self.dados.loc[self.dados.submercado == self.referencia].index
+        self.dados.loc[aux, 'ena_p'] = self.dados.loc[aux, 'ena'] / self.mlt.loc[mes - 1, str(self.referencia)] * 100
+
+        # calcula ena percentual subsistema de comparacao
+        aux = self.dados.loc[self.dados.submercado == self.par_sub[1]].index
+        self.dados.loc[aux, 'ena_p'] = self.dados.loc[aux, 'ena'] / self.mlt.loc[mes - 1, str(self.par_sub[1])] * 100
+
+        # pega enas para formacao das enas
+        aux = self.dados.loc[self.dados['submercado'] == self.referencia, ['cenario', 'ena', 'ena_p']]
+        aux2 = self.dados.loc[self.dados['submercado'] == self.par_sub[1], ['cenario', 'ena', 'ena_p']]
+
+        aux = aux.rename(columns={'ena': 'ena_bruta_{}'.format(subsistemas[self.referencia - 1]),
+                            'ena_p':'ena_p_{}'.format(subsistemas[self.referencia - 1])
+                            }
+                   )
+        aux2 = aux2.rename(columns={'ena': 'ena_bruta_{}'.format(subsistemas[self.par_sub[1] - 1]),
+                             'ena_p': 'ena_p_{}'.format(subsistemas[self.par_sub[1] - 1])
+                            }
+                   )
+
+        self.dados = pd.merge(self.dados, aux, on=['cenario'])
+        self.dados = pd.merge(self.dados, aux2, on=['cenario'])
+        self.dados.sort_values(by=['preco'], ascending=True, inplace=True)
+        sns.set_style('ticks', {'axes.grid': True,
+                                'legend.frameon': True,
+                                'grid.linestyle': u'--',
+                                'legend.scatterpoints': 1
+                               }
+                      )
+
+        markers = ['o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'X'] * 10
+        sns.set_context('notebook')
+        sns.axes_style()
+
+        # Grafico ENA bruta
+        sns.lmplot(x='ena_bruta_{}'.format(subsistemas[self.referencia - 1]),
+                   y='ena_bruta_{}'.format(subsistemas[self.par_sub[1] - 1]),
+                   data=self.dados,
+                   hue='group',
+                   fit_reg=False,
+                   palette='hsv',
+                   legend=False,
+                   legend_out=False,
+                   size=6.8,
+                   aspect=1.5,
+                   scatter=True,
+                   markers=markers[0:len(self.dados['group'].unique())]
+                   )
+
+        plt.xlabel(s='ENA - {} [MWm]'.format(subsistemas[self.referencia - 1]))
+        plt.ylabel(s='ENA - {} [MWm]'.format(subsistemas[self.par_sub[1] - 1]))
+        plt.legend(loc='best', fancybox=True, frameon=True, title='Classes PLD', facecolor='white')
+        plt.minorticks_on()
+        plt.grid(b=True, which='both', linestyle= u'--')
+        plt.title(s='Matriz de Precos GEVAZP - Mes {} - Mercado - {}'.format(mes, subsistemas[self.referencia - 1]),
+                  loc='center')
+        plt.savefig(os.path.join(self.paths['export'], '{}_resultado_b_{}_{}.png'.format(mes,
+                                                                                      str(subsistemas[self.referencia - 1]),
+                                                                                      str(subsistemas[self.par_sub[1] - 1])
+                                                                                      )
+                                 )
+                    )
+        plt.close()
+
+        # Grafico ENA relativa
+        sns.lmplot(x='ena_p_{}'.format(subsistemas[self.referencia - 1]),
+                   y='ena_p_{}'.format(subsistemas[self.par_sub[1] - 1]),
+                   data=self.dados,
+                   hue='group',
+                   fit_reg=False,
+                   palette='hsv',
+                   legend=False,
+                   legend_out=False,
+                   size=6.8,
+                   aspect=1.5,
+                   scatter=True,
+                   markers=markers[0:len(self.dados['group'].unique())]
+                   )
+
+        plt.xlabel(s='ENA - {} [%MLT]'.format(subsistemas[self.referencia - 1]))
+        plt.ylabel(s='ENA - {} [%MLT]'.format(subsistemas[self.par_sub[1] - 1]))
+        plt.legend(loc='best', fancybox=True, frameon=True, title='Classes PLD', facecolor='white')
+        plt.minorticks_on()
+        plt.grid(b=True, which='both', linestyle=u'--')
+        plt.title(s='Matriz de Precos GEVAZP - Mes {} - Mercado - {}'.format(mes, subsistemas[self.referencia - 1]),
+                  loc='center')
+        plt.savefig(os.path.join(self.paths['export'], '{}_resultado_p_{}_{}.png'.format(mes,
+                                                                                       str(subsistemas[
+                                                                                               self.referencia - 1]),
+                                                                                       str(subsistemas[
+                                                                                               self.par_sub[1] - 1])
+                                                                                       )
+                                 )
+                    )
+        plt.close()
+        return
+
 
 def executa_gevazp(parametros):
     import os
@@ -668,16 +806,17 @@ if __name__ == '__main__':
     from Crypto.PublicKey import RSA
     import ast
     import getpass
+    import seaborn as sns
 
     # Configuracao -----------------------------------------------------------------------------------------------------
-    mes = 11
-    paths = {'decomp_base': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\11\decomp_base',
-             'decks_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\11\decks',
-             'vazoes_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\11\gevazp_base',
+    mes = 10
+    paths = {'decomp_base': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10\decomp_base',
+             'decks_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10\decks',
+             'vazoes_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10\gevazp_base',
              'executavel_gevazp': r'C:\Gevazp\gevazp',
              'arquivos_gevazp': r'C:\Gevazp',
-             'export': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\11\export_1',
-             'mlt': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\11'
+             'export': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10\export_1',
+             'mlt': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10'
              }
 
     nomes = {'gevazp_exec': ['arquivos.dat', 'caso.dat', 'gevazp.dat', 'MODIF.DAT',
@@ -700,13 +839,13 @@ if __name__ == '__main__':
                        'lic_decomp': r'deco.prm'
                        }
 
-    config_plot = {'valor_inicial': 200,
-                   'n_classes': 9,
+    config_plot = {'valor_inicial': 150,
+                   'n_classes': 15,
                    'step': 40,
                    'sub_referencia': 1,
                    'par_subs': [1, 2],
-                   'retangulo': {'lower_left': (0.70, 0.40),
-                                 'height': 0.25,
+                   'retangulo': {'lower_left': (0.80, 0.70),
+                                 'height': 0.50,
                                  'width': 0.25}
                    }
     config_email = {'from': 'multivac.gerenciador@gmail.com',
@@ -766,8 +905,9 @@ if __name__ == '__main__':
         resultados = pd.read_csv(os.path.join(paths['export'], 'resultados.csv'), sep=';', decimal=',')
         mlt = pd.read_csv(os.path.join(paths['mlt'], nomes['mlt']), sep=';', decimal=',')
         desenho = Desenho(paths=paths, nomes=nomes ,dados=resultados, config_plot=config_plot, mlt=mlt)
-        desenho.desenha_scatter_ena_bruta(mes=mes)
-        desenho.desenha_scatter(mes=mes)
+        #desenho.desenha_scatter_ena_bruta(mes=mes)
+        #desenho.desenha_scatter(mes=mes)
+        desenho.desenha_scatter_seaborn(mes=mes)
 
     if execucao['envia_email'] == 1:
         gerenciador = Gerenciador(paths=paths, nomes=nomes, config_servidor=config_servidor)
