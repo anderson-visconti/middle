@@ -645,7 +645,6 @@ class Desenho:
         # calcula ena percentual subsistema de referencia
         aux = self.dados.loc[self.dados.submercado == self.referencia].index
         self.dados.loc[aux, 'ena_p'] = self.dados.loc[aux, 'ena'] / self.mlt.loc[mes - 1, str(self.referencia)] * 100
-
         # calcula ena percentual subsistema de comparacao
         aux = self.dados.loc[self.dados.submercado == self.par_sub[1]].index
         self.dados.loc[aux, 'ena_p'] = self.dados.loc[aux, 'ena'] / self.mlt.loc[mes - 1, str(self.par_sub[1])] * 100
@@ -676,7 +675,7 @@ class Desenho:
         markers = ['o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'X'] * 10
         sns.set_context('notebook')
         sns.axes_style()
-
+        
         # Grafico ENA bruta
         sns.lmplot(x='ena_bruta_{}'.format(subsistemas[self.referencia - 1]),
                    y='ena_bruta_{}'.format(subsistemas[self.par_sub[1] - 1]),
@@ -686,8 +685,8 @@ class Desenho:
                    palette='hsv',
                    legend=False,
                    legend_out=False,
-                   size=6.8,
-                   aspect=1.5,
+                   size=6.3,
+                   aspect=2.0,
                    scatter=True,
                    markers=markers[0:len(self.dados['group'].unique())]
                    )
@@ -716,8 +715,8 @@ class Desenho:
                    palette='hsv',
                    legend=False,
                    legend_out=False,
-                   size=6.8,
-                   aspect=1.5,
+                   size=6.3,
+                   aspect=2.0,
                    scatter=True,
                    markers=markers[0:len(self.dados['group'].unique())]
                    )
@@ -809,14 +808,14 @@ if __name__ == '__main__':
     import seaborn as sns
 
     # Configuracao -----------------------------------------------------------------------------------------------------
-    mes = 10
-    paths = {'decomp_base': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10\decomp_base',
-             'decks_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10\decks',
-             'vazoes_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10\gevazp_base',
+    mes = 12
+    paths = {'decomp_base': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\10\12\decomp_base',
+             'decks_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\10\12\decks',
+             'vazoes_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\10\12\gevazp_base',
              'executavel_gevazp': r'C:\Gevazp\gevazp',
              'arquivos_gevazp': r'C:\Gevazp',
-             'export': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10\export_1',
-             'mlt': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\09\partida-1-01\10'
+             'export': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\10\12\export_1',
+             'mlt': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\10\12'
              }
 
     nomes = {'gevazp_exec': ['arquivos.dat', 'caso.dat', 'gevazp.dat', 'MODIF.DAT',
@@ -843,7 +842,7 @@ if __name__ == '__main__':
                    'n_classes': 15,
                    'step': 40,
                    'sub_referencia': 1,
-                   'par_subs': [1, 2],
+                   'par_subs': [1, 3],
                    'retangulo': {'lower_left': (0.80, 0.70),
                                  'height': 0.50,
                                  'width': 0.25}
@@ -905,8 +904,6 @@ if __name__ == '__main__':
         resultados = pd.read_csv(os.path.join(paths['export'], 'resultados.csv'), sep=';', decimal=',')
         mlt = pd.read_csv(os.path.join(paths['mlt'], nomes['mlt']), sep=';', decimal=',')
         desenho = Desenho(paths=paths, nomes=nomes ,dados=resultados, config_plot=config_plot, mlt=mlt)
-        #desenho.desenha_scatter_ena_bruta(mes=mes)
-        #desenho.desenha_scatter(mes=mes)
         desenho.desenha_scatter_seaborn(mes=mes)
 
     if execucao['envia_email'] == 1:
