@@ -43,10 +43,10 @@ def make_map(dados, file_config, nome_modelo, datas):
     cbar = m.colorbar(cs, location='bottom', label='Preciptacao [mm]')
     cbar.set_ticks(levels)
     cbar.ax.tick_params(labelsize=8)
-    im = plt.imread(fname=os.path.join(file_config['path_logo'], file_config['nome_logo']))
-    newax = fig.add_axes([0.58, 0.16, 0.2, 0.2], anchor='SE', zorder=+1)
-    newax.imshow(im)
-    newax.axis('off')
+    #im = plt.imread(fname=os.path.join(file_config['path_logo'], file_config['nome_logo']))
+    #newax = fig.add_axes([0.58, 0.16, 0.2, 0.2], anchor='SE', zorder=+1)
+    #newax.imshow(im)
+    #newax.axis('off')
     plt.savefig(os.path.join(file_config['path_export'], '{:%Y%m%d}-{}.png'.format(datas['data_inicial'],
                                                                                    nome_modelo)),
                 bbox_inches='tight'
@@ -80,6 +80,7 @@ def get_config_ons(flag='s'):
 
 def Cria_pastas():
     # Cria as pastas onde salvar os arquivos
+
     if not os.path.exists(path['exportar']) == True:
         cria_pasta_figuras = os.mkdir(path['exportar'])
 
@@ -89,23 +90,23 @@ def Cria_pastas():
     if not os.path.exists(path['GESF']) == True:
         cria_pasta_GESF = os.mkdir(path['GESF'])
 
-def Unzip(local_ETA, local_GESF):
+def Unzip():
 
     # ETA
-    data1 = local_ETA.read()
+    #data1 = local_ETA.read()
     # Salva o arquivo
-    with open(os.path.join(path['ETA'], file_ETA), mode='wb') as code:
-        code.write(data1)
+    #with open(os.path.join(path['ETA'], file_ETA), mode='wb') as code:
+    #    code.write(data1)
     # Unzip
     zip_ref1 = zipfile.ZipFile(os.path.join(path['ETA'], file_ETA), 'r')
     zip_ref1.extractall(path['ETA'])
     zip_ref1.close()
 
     # GESF
-    data2 = local_GESF.read()
+    #data2 = local_GESF.read()
     # Salva o arquivo
-    with open(os.path.join(path['GESF'], file_GESF), mode='wb') as code:
-        code.write(data2)
+    #with open(os.path.join(path['GESF'], file_GESF), mode='wb') as code:
+    #    code.write(data2)
     # Unzip
     zip_ref2 = zipfile.ZipFile(os.path.join(path['GESF'], file_GESF), 'r')
     zip_ref2.extractall(path['GESF'])
@@ -131,10 +132,11 @@ def envia_email(de, para):
         mime.add_header('Content-ID', '<{}>'.format(file))
 
         msg.attach(mime)
-
     msgText = MIMEText('<br><td><img src="cid:{}"><td><td><img src="cid:{}"><td><br><br><br><br>'
                        'E-mail enviado automaticamente. Qualquer erro, entrar em contato com '
-                       'alessandra.marques@enexenergia.com.br'.format(*nomes), 'html')
+                       'anderson.svisconti@gmail.com'
+                       'Periodo de teste finaliza em:22/11/2017 '.format(*nomes), 'html')
+
     msg.attach(msgText)
     raw = msg.as_string()
 
@@ -146,7 +148,8 @@ def envia_email(de, para):
 
 if __name__ == '__main__':
     import pandas as pd
-    import urllib2
+    #import urllib2
+    import urllib3
     import numpy as np
     import matplotlib.pyplot as plt
     import os
@@ -159,21 +162,31 @@ if __name__ == '__main__':
     from email.mime.image import MIMEImage
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
+    import shutil
     plt.switch_backend('agg')
+    
     # URL dos arquivos
     URLETA = r'https://agentes.ons.org.br/images/operacao_integrada/meteorologia/eta/Eta40_precipitacao10d.zip'
     URLGESF = r'https://agentes.ons.org.br/images/operacao_integrada/meteorologia/global/GEFS_precipitacao10d.zip'
+    
     # Nome dos arquivos
     file_ETA = 'Eta40_precipitacao10d.zip'
     file_GESF = 'GEFS_precipitacao10d.zip'
 
     # Caminhos
-    path = {'ETA':
-                r'/home/middle/scripts-meteo/conjunto/eta/{:%Y%m%d}'.format(datetime.now()),
-            'GESF':
-                r'/home/middle/scripts-meteo/conjunto/gesf/{:%Y%m%d}'.format(datetime.now()),
-            'exportar':
-                r'/home/middle/scripts-meteo/conjunto/export/{:%Y%m%d}'.format(datetime.now())}
+    path = {'ETA':r'/home/centos/scripts-meteo/conjunto/eta/{:%Y%m%d}'.format(datetime.now()),
+            'GESF':r'/home/centos/scripts-meteo/conjunto/gesf/{:%Y%m%d}'.format(datetime.now()),
+            'exportar':r'/home/centos/scripts-meteo/conjunto/export/{:%Y%m%d}'.format(datetime.now())
+           }
+
+    file_config = {'path_export':
+                    r'/home/centos/scripts-meteo/conjunto/export/{:%Y%m%d}'.format(datetime.now()),
+                   'path_logo':r'/home/centos/scripts-meteo/config/logo',
+                   'nome_logo':r'Logo.png',
+                   'path_shape_file':r'/home/centos/scripts-meteo/config/shapefile',
+                   'nome_shape_file':r'BRA_adm1'
+                   }
+
     hoje = datetime.today()
     if hoje.weekday() == 5:
         de = (hoje + timedelta(7))
@@ -191,18 +204,22 @@ if __name__ == '__main__':
     # Funcao para criar pastas onde salvar as imagens
     Cria_pastas()
 
-    # Unzip
-    local_ETA = urllib2.urlopen(URLETA)
-    local_GESF = urllib2.urlopen(URLGESF)
-    Unzip(local_ETA, local_GESF)
+    # Download dos arquivos
+    http = urllib3.PoolManager()    
+    with http.request('GET', URLETA, preload_content=False) as r, open(os.path.join(path['ETA'], file_ETA), 'wb') as out_file:       
+        shutil.copyfileobj(r, out_file)
 
-    file_config = {'path_export':
-                       r'/home/middle/scripts-meteo/conjunto/export/{:%Y%m%d}'.format(datetime.now()),
-                   'path_logo':r'/home/middle/scripts-meteo/config/logo',
-                   'nome_logo':r'Logo.png',
-                   'path_shape_file':r'/home/middle/scripts-meteo/config/shapefile',
-                   'nome_shape_file':r'BRA_adm1'
-                   }
+    with http.request('GET', URLGESF, preload_content=False) as r, open(os.path.join(path['GESF'], file_GESF), 'wb') as out_file:       
+        shutil.copyfileobj(r, out_file)
+
+    # Unzip
+    zip_ref1 = zipfile.ZipFile(os.path.join(path['ETA'], file_ETA), 'r')
+    zip_ref1.extractall(path['ETA'])
+    zip_ref1.close()
+
+    zip_ref1 = zipfile.ZipFile(os.path.join(path['GESF'], file_GESF), 'r')
+    zip_ref1.extractall(path['GESF'])
+    zip_ref1.close()
 
     for i in datas.keys():
         datas[i] = pd.to_datetime(datas[i])
@@ -250,15 +267,17 @@ if __name__ == '__main__':
     ########### Enviar email com as figuras #####################
 
     de = 'multivac.gerenciador@gmail.com'
-    #para = ['alessandra.marques@enexenergia.com.br']
-    para = ['alessandra.marques@enexenergia.com.br',
-            'albert.ramcke@enexenergia.com.br',
-            'anderson.visconti@enexenergia.com.br',
-            'andre.pagan@enexenergia.com.br',
-            'rodolfo.cabral@enexenergia.com.br',
-            'ramon.nunes@enexenergia.com.br',
-            'karla.assuncao@enexenergia.com.br',
-            'marques.landeira@gmail.com']
+    para = ['mesa@principalenergia.com.br',
+            'anderson.svisconti@gmail.com'
+           ]
+    #para = ['alessandra.marques@enexenergia.com.br',
+    #        'albert.ramcke@enexenergia.com.br',
+    #        'anderson.visconti@enexenergia.com.br',
+    #        'andre.pagan@enexenergia.com.br',
+    #        'rodolfo.cabral@enexenergia.com.br',
+    #        'ramon.nunes@enexenergia.com.br',
+    #        'karla.assuncao@enexenergia.com.br',
+    #        'marques.landeira@gmail.com']
 
     envia_email(de, para)
 
