@@ -210,9 +210,9 @@ def loop_mapa(paths, nomes, variaveis, periodo, sub_set, flag_escala):
 
 # Cria as pastas onde salvar os arquivos e imagens
 def pastas():
-    dia = r'/home/middle/scripts-meteo/cfsv2/{:%Y%m%d}00'.format(datetime.now())
-    mes = r'/home/middle/scripts-meteo/cfsv2/{:%Y%m%d}00/Mensal'.format(datetime.now())
-    semana = r'/home/middle/scripts-meteo/cfsv2/{:%Y%m%d}00/Semanal'.format(datetime.now())
+    dia = r'/home/centos/scripts-meteo/cfsv2/{:%Y%m%d}00'.format(datetime.now())
+    mes = r'/home/centos/scripts-meteo/cfsv2/{:%Y%m%d}00/Mensal'.format(datetime.now())
+    semana = r'/home/centos/scripts-meteo/cfsv2/{:%Y%m%d}00/Semanal'.format(datetime.now())
     if not os.path.exists(dia) == True:
         pasta_diaria = os.mkdir(dia)
     if not os.path.exists(mes) == True:
@@ -225,12 +225,12 @@ def mensal():
     from datetime import datetime
     import pandas as pd
 
-    paths = {'chuva': r'/home/middle/scripts-meteo/cfsv2/netcdf',
-             'climatologia': r'/home/middle/scripts-meteo/config/precip',
-             'export': r'/home/middle/scripts-meteo/cfsv2/{:%Y%m%d}00/Mensal'.format(
+    paths = {'chuva': r'/home/centos/scripts-meteo/cfsv2/netcdf',
+             'climatologia': r'/home/centos/scripts-meteo/config/precip',
+             'export': r'/home/centos/scripts-meteo/cfsv2/{:%Y%m%d}00/Mensal'.format(
                  datetime.now()),
-             'shape_estados': r'/home/middle/scripts-meteo/config/shapefile',
-             'logo': r'/home/middle/scripts-meteo/config/logo'
+             'shape_estados': r'/home/centos/scripts-meteo/config/shapefile',
+             'logo': r'/home/centos/scripts-meteo/config/logo'
              }
 
     variaveis = {'cfsv2': {'lon': 'lon',
@@ -299,12 +299,12 @@ def semanal():
     from datetime import datetime
     import pandas as pd
 
-    paths = {'chuva': r'/home/middle/scripts-meteo/cfsv2/netcdf',
-             'climatologia': r'/home/middle/scripts-meteo/config/precip',
-             'export': r'/home/middle/scripts-meteo/cfsv2/{:%Y%m%d}00/Semanal'.format(
+    paths = {'chuva': r'/home/centos/scripts-meteo/cfsv2/netcdf',
+             'climatologia': r'/home/centos/scripts-meteo/config/precip',
+             'export': r'/home/centos/scripts-meteo/cfsv2/{:%Y%m%d}00/Semanal'.format(
                  datetime.now()),
-             'shape_estados': r'/home/middle/scripts-meteo/config/shapefile',
-             'logo': r'/home/middle/scripts-meteo/config/logo'
+             'shape_estados': r'/home/centos/scripts-meteo/config/shapefile',
+             'logo': r'/home/centos/scripts-meteo/config/logo'
              }
 
     variaveis = {'cfsv2': {'lon': 'lon',
@@ -410,7 +410,7 @@ def envia_email(de, para, men, sem):
 
     # HTML do corpo do email
     msgText = MIMEText('<body>'
-                       '<a href="http://ec2-34-224-35-9.compute-1.amazonaws.com/cfsv2/">Visite nosso site.</a>'
+                       #'<a href="http://ec2-34-224-35-9.compute-1.amazonaws.com/cfsv2/">Visite nosso site.</a>'
                        '<table>'
                        '<th colspan = "4"><b><font size="6" color="red">Projecao Mensal</font></b></th>'
                        '<tr>'
@@ -453,7 +453,7 @@ def envia_email(de, para, men, sem):
                        '</tr>'
                        '</table><br><br><br><br>'
                        '<p>E-mail enviado automaticamente. Qualquer erro, entrar em contato com '
-                       'alessandra.marques@enexenergia.com.br</p>'
+                       'anderson.svisconti@gmail.com</p>'
                        '</body>'.format(*nomes), 'html')
 
     msg.attach(msgText)
@@ -466,15 +466,20 @@ def envia_email(de, para, men, sem):
 # Converte o arquivo grib em netcdf
 def converte():
     from datetime import datetime
-    import urllib2
+    #import urllib2
+    import urllib3
     import os
-    path = r'/home/middle/scripts-meteo/cfsv2/netcdf'
+    import shutil
+    path = r'/home/centos/scripts-meteo/cfsv2/netcdf'
     prate = 'prate.02.{:%Y%m%d}00.daily.grb2'.format(datetime.now())
     URLGRIB = r'http://ftpprd.ncep.noaa.gov/data/nccf/com/cfs/prod/cfs/cfs.{:%Y%m%d}/00/time_grib_02/prate.02.{:%Y%m%d}00.daily.grb2'.format(datetime.now(), datetime.now())
-    f = urllib2.urlopen(URLGRIB)
-    html = f.read()
-    with open(os.path.join(path, prate), mode='wb') as code:
-        code.write(html)
+    http = urllib3.PoolManager()    
+    with http.request('GET', URLGRIB, preload_content=False) as r, open(os.path.join(path, prate), mode='wb') as out_file:
+        shutil.copyfileobj(r, out_file)
+    #f = urllib2.urlopen(URLGRIB)
+    #html = f.read()
+    #with open(os.path.join(path, prate), mode='wb') as code:
+    #    code.write(html)
 
    
     os.chdir(path)
@@ -505,7 +510,7 @@ def html(men, sem, caminho_base):
 # Chama todas as funcoes
 if __name__ == '__main__':
     import pandas as pd
-    import urllib2
+    #import urllib2
     import numpy as np
     import matplotlib.pyplot as plt
     import os
@@ -524,27 +529,23 @@ if __name__ == '__main__':
 
 
     # Caminho onde esta salva as imagens
-    men = r'/home/middle/scripts-meteo/cfsv2/{:%Y%m%d}00/Mensal'.format(datetime.now())
-    sem = r'/home/middle/scripts-meteo/cfsv2/{:%Y%m%d}00/Semanal'.format(datetime.now())
+    men = r'/home/centos/scripts-meteo/cfsv2/{:%Y%m%d}00/Mensal'.format(datetime.now())
+    sem = r'/home/centos/scripts-meteo/cfsv2/{:%Y%m%d}00/Semanal'.format(datetime.now())
     
     # Caminho do HTML base
-    caminho_base = r'/home/middle/scripts-meteo'
+    caminho_base = r'/home/centos/scripts-meteo'
 
     # Informacoes de email
     de = 'multivac.gerenciador@gmail.com'
+    para = ['anderson.svisconti@gmail']
 
-    #para = ['alessandra.marques@enexenergia.com.br']
-
-    '''para = ['alessandra.marques@enexenergia.com.br', 
-            'anderson.visconti@enexenergia.com.br']'''
-
-    para = ['alessandra.marques@enexenergia.com.br',
-            'anderson.visconti@enexenergia.com.br',
-            'andre.pagan@enexenergia.com.br',
-            'rodolfo.cabral@enexenergia.com.br',
-            'ramon.nunes@enexenergia.com.br',
-            'albert.ramcke@enexenergia.com.br',
-            'marques.landeira@gmail.com']
+#    para = ['alessandra.marques@enexenergia.com.br',
+#            'anderson.visconti@enexenergia.com.br',
+#            'andre.pagan@enexenergia.com.br',
+#            'rodolfo.cabral@enexenergia.com.br',
+#            'ramon.nunes@enexenergia.com.br',
+#            'albert.ramcke@enexenergia.com.br',
+#            'marques.landeira@gmail.com']
 
     print('....................................................Script comecou a rodar............................................')
     converte()
