@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# !/usr/bin/env python
 # *- coding: utf-8 -*-
 global private_key
 private_key = '''-----BEGIN RSA PRIVATE KEY-----
@@ -17,6 +17,7 @@ GVNwvXO50huoIv0n8ZkCQQDOmPKAasRavV9iuj3ekQhH6iwHbMa46sYF5aoAGQ/m
 hCL6y79BelOBAnBHt/oUvp4dqjwr8J2wGGi1DBvUWlGu
 -----END RSA PRIVATE KEY-----'''
 
+
 class Criptografia:
     def __init__(self, paths, nomes):
         self.paths = paths
@@ -29,17 +30,16 @@ class Criptografia:
         try:
             pub_key_file.write(str(self.public_key))
             print('\nchave publica {} exportada para {}\n'.format(self.nomes['public_key'],
-                                                                self.paths['export']
-                                                              )
+                                                                  self.paths['export']
+                                                                  )
                   )
             pub_key_file.close()
         except:
             print('\nNao foi possivel exportar a chave publica {} para {}\n'.format(self.nomes['public_key'],
-                                                                                  self.paths['export']
-                                                                                )
+                                                                                    self.paths['export']
+                                                                                    )
                   )
         return self
-
 
     def gerar_senha(self):
         pub_key = open(os.path.join(self.paths['export'], self.nomes['public_key']), 'r').read()
@@ -48,7 +48,7 @@ class Criptografia:
 
         if senha == senha2:
             priv_key = RSA.importKey(private_key)
-            encrypt_senha =  priv_key.encrypt(senha, 42)
+            encrypt_senha = priv_key.encrypt(senha, 42)
             senha_file = open(os.path.join(self.paths['export'], self.nomes['senha_email']), 'w')
             senha_file.write(str(encrypt_senha))
             senha_file.close()
@@ -67,7 +67,6 @@ class Gerenciador:
         self.resultados = pd.DataFrame()
         return
 
-
     def listar_casos(self):
         self.aux = map(int, os.listdir(self.paths['decks_gevazp']))
         self.lista = []
@@ -78,12 +77,11 @@ class Gerenciador:
         self.lista = pd.DataFrame.from_dict(self.lista)
         return self
 
-
     def executar_decomp(self):
         # itera sobre todos os cenarios
         for i in self.lista.iterrows():
             # Copiar arquivos decomp_base para pasta
-            for j in  glob.glob(os.path.join(self.paths['decomp_base'], '*')):
+            for j in glob.glob(os.path.join(self.paths['decomp_base'], '*')):
                 shutil.copy(src=j, dst=i[1].caminho)
 
             # Copia licenca
@@ -93,10 +91,10 @@ class Gerenciador:
             # Entra na pasta e executa decomp
             print('Preparacao para executar {}'.format(i[1].caminho))
             os.chdir(i[1].caminho)
-            #FNULL = open(os.devnull, 'w')
+            # FNULL = open(os.devnull, 'w')
             print('Execucao do decomp para {}'.format(i[1].caminho))
-            stdout = open(os.path.join(i[1].caminho, 'stdout.txt'), 'w')    # arquivo para saida
-            stderr = open(os.path.join(i[1].caminho, 'stderr.txt'), 'w')    # arquivo para saida de erros
+            stdout = open(os.path.join(i[1].caminho, 'stdout.txt'), 'w')  # arquivo para saida
+            stderr = open(os.path.join(i[1].caminho, 'stderr.txt'), 'w')  # arquivo para saida de erros
             retcode = subprocess.call(['convertenomesdecomp_{}'.format(self.config_servidor['versao_decomp'])
                                        ],
                                       stdout=stdout,
@@ -108,9 +106,9 @@ class Gerenciador:
                                                                            self.config_servidor['versao_decomp']
                                                                            )
                                        ],
-                                     stdout=stdout,
-                                     stderr=stderr,
-                                     shell=True
+                                      stdout=stdout,
+                                      stderr=stderr,
+                                      shell=True
                                       )
             stdout.close()
             stderr.close()
@@ -119,63 +117,49 @@ class Gerenciador:
             else:
                 print('Execucao completa cenario -> {}'.format(i[1].caminho))
                 #  pega dados
-                self.pegar_resultado(cenario=i[1].cenario)
+                self.pegar_resultado_acoplamento(cenario=i[1].cenario)
                 self.exportar_resultados()
 
-            #  remove todos os arquivos execeto relato.rv0 e prevs.rv0 e vazoes.rv0
+            # remove todos os arquivos execeto relato.rv0 e prevs.rv0 e vazoes.rv0
             for j in os.listdir(i[1].caminho):
-                if j not in  ['relato.rv0', 'prevs.rv0', 'vazoes.rv0']:
+                if j not in ['relato.rv0', 'prevs.rv0', 'vazoes.rv0']:
                     os.remove(os.path.join(i[1].caminho, j))
 
             s = """---------------------------------------------------------------------------------------\n"""
             print(s)
         return
 
-
     def pegar_resultado(self, cenario):
         print('Capturando resultados do cenario {}'.format(cenario))
-        relato = open(os.path.join(self.paths['decks_gevazp'], str(cenario), 'relato.rv0'), 'r')
-        submercado = 1
+        relato = open(os.path.join(self.paths['decks_gevazp'], str(cenario), 'relato.rv0'), 'r').readlines()
         cont = 0
-        cont_ena = 1
+        flag_acoplamento = 0
         dados_ena = []
-        dados_preco = []
-        ena = {'submercado': 0.0,
-               'cenario': 0.0,
-                'ena': 0.0,
-               }
-        preco = {'submercado': 0.0,
-               'cenario': 0.0,
-               'preco': 0.0,
-               }
-        for linha in relato:
-            if linha.strip() == 'RELATORIO  DO  BALANCO  ENERGETICO':
-                cont += 1
+        
+        for i, linha in enumerate(relato):
 
-            if cont > 1:
-                break
+            if linha.find('Acoplamento c/ Longo Prazo por Subsistema') != -1:
+                flag_acoplamento = 1
 
-            if linha[0:12].strip() == 'EAR_ini' and cont_ena <=4:    # pega ENA
-                dados_ena.append([cenario, submercado, float(linha[37:43].strip())])
-                submercado += 1
-                cont_ena += 1
+            if flag_acoplamento == 1 and linha.strip().find('SUBSISTEMA:') != -1:
+                dados_ena.append(
+                    {
+                    'submercado': int(linha[15:20].strip()),
+                    'cenario': cenario,
+                    'ena': float(relato[i + 4][9:18].strip()),
+                    'preco': 0.0
+                    }
+                )
 
-                if submercado > 4:
-                    submercado = 1
+            if linha.find('Custo marginal de operacao do subsistema') != -1 and cont < 1:
+                cont = 1
+                for j in range(0, 3):
+                    dados_ena[j]['preco'] = float(relato[i + j][48:69].strip())
 
-            if linha[0:44].strip() == 'Custo marginal de operacao do subsistema':   # pega PLDs
-                if linha[44:46].strip() != 'FC':
-                    dados_preco.append([cenario, submercado, float(linha[56:69].strip())])
-                    submercado += 1
+        df_resultados = pd.DataFrame(data=dados_ena, columns=['cenario', 'submercado', 'ena', 'preco'])
+        self.resultados = pd.concat([self.resultados, df_resultados])
 
-                    if submercado > 4:
-                        submercado = 1
-
-        x = pd.DataFrame(data=dados_ena, columns=['cenario', 'submercado', 'ena'])
-        y = pd.DataFrame(data=dados_preco, columns=['cenario', 'submercado', 'preco'])
-        self.resultados =pd.concat([self.resultados, pd.merge(x, y, on=['cenario', 'submercado'])])
         return self
-
 
     def exportar_resultados(self):
         self.resultados.to_csv(os.path.join(self.paths['export'], 'resultados.csv'),
@@ -183,7 +167,6 @@ class Gerenciador:
 
         print('Resultado exportado para {}'.format(self.paths['export']))
         return
-
 
     def envia_email(self, config_email):
         priv_key = RSA.importKey(private_key)
@@ -199,10 +182,10 @@ class Gerenciador:
         msg['From'] = config_email['from']
         msg['To'] = ', '.join(config_email['to'])
         body = \
-        '''Resultados GEVAZP
-        Caminho: {}
-        
-*obs: E-mail automatico. Em caso de bugs, entre em contato com administrador'''
+            '''Resultados GEVAZP
+            Caminho: {}
+
+    *obs: E-mail automatico. Em caso de bugs, entre em contato com administrador'''
 
         msg.attach(MIMEText(body.format(self.paths['decks_gevazp']), 'plain'))
 
@@ -221,7 +204,6 @@ class Casos:
         self.nomes = nomes
         return
 
-
     def ler_vazoes(self, sep, decimal, mes):
         df = pd.read_csv(filepath_or_buffer=os.path.join(self.paths['vazoes_gevazp'], self.nomes['vazoes']),
                          sep=sep, decimal=decimal)
@@ -231,12 +213,10 @@ class Casos:
         self.dados = df
         return self
 
-
     def gerar_arquivos(self):
         print('qualquer coisa')
 
         return
-
 
     def gerar_ambiente(self):
         c = self.dados.index.levels[0].values
@@ -248,7 +228,6 @@ class Casos:
 
         print('Ambiente de pastas criado em {}'.format(self.paths['decks_gevazp']))
         return self
-
 
     def gerar_prevs(self):
         s = '''{:>6d}{:>5d}{:>10d}{:>10d}{:>10d}{:>10d}{:>10d}{:>10d}\n'''
@@ -278,12 +257,10 @@ class Casos:
             #    file.write(s.format(k, j[0], vazao, vazao, vazao, vazao, vazao, vazao))
             #    k += 1
 
-
             file.close()
 
         print('Arquivos prevs criados')
         return self
-
 
     def calcula_postos(self, mes):
         x = [237, 240, 242, 238, 239, 245, 244, 246, 129, 202, 130, 125, 201, 203, 117, 301, 266, 76, 288, 34]
@@ -425,13 +402,12 @@ class Desenho:
         aux = []
         for i in range(config_plot['n_classes']):
             aux.append([config_plot['valor_inicial'] + i * config_plot['step'],
-                        config_plot['valor_inicial'] +  (i + 1) * config_plot['step']
+                        config_plot['valor_inicial'] + (i + 1) * config_plot['step']
                         ]
                        )
         self.config_plot = pd.DataFrame(data=aux, columns=['inferior', 'superior'])
         self.mlt = mlt
         return
-
 
     def desenha_scatter(self, mes):
         subsistemas = ['SE', 'S', 'NE', 'N']
@@ -447,9 +423,9 @@ class Desenho:
 
         for i in self.config_plot.iterrows():
             aux = pd.DataFrame(self.dados.loc[(self.dados['preco'] >= i[1].inferior) &
-                                (self.dados['preco'] < i[1].superior) &
-                                (self.dados['submercado'] == self.referencia)
-                               ]
+                                              (self.dados['preco'] < i[1].superior) &
+                                              (self.dados['submercado'] == self.referencia)
+                                              ]
                                )
 
             aux = self.dados.loc[self.dados['cenario'].isin(aux['cenario'].values)]
@@ -459,7 +435,7 @@ class Desenho:
             y = aux.loc[aux['submercado'] == self.par_sub[1], 'ena'].values / \
                 mlt.loc[mlt['mes'] == mes, str(self.par_sub[1])].values[0]
 
-            #ax.scatter(x=x,
+            # ax.scatter(x=x,
             #           y=y,
             #           c=colors[i[0]]
             #           )
@@ -467,8 +443,8 @@ class Desenho:
                        y=y,
                        c=colors[i[0]],
                        alpha=1.0
-                   )
-        #  Legenda
+                       )
+        # Legenda
         cenarios = self.dados.shape[0] / 4 + 1
         plt.legend(self.config_plot.texto, loc=2, title='Agrupamento de {} cenarios'.format(cenarios),
                    fancybox=True
@@ -480,26 +456,26 @@ class Desenho:
         plt.ylabel(s='{} [%MLT]'.format(subsistemas[self.par_sub[1] - 1]))
         plt.tick_params(axis='both', which='major', labelsize=7)
 
-        #tick_x = ticker.ScalarFormatter(0.2)
-        #ax.xaxis.set_major_locator(ticker.ScalarFormatter(0.2))
-        #ax.yaxis.set_major_locator(ticker.ScalarFormatter(0.2))
+        # tick_x = ticker.ScalarFormatter(0.2)
+        # ax.xaxis.set_major_locator(ticker.ScalarFormatter(0.2))
+        # ax.yaxis.set_major_locator(ticker.ScalarFormatter(0.2))
 
         lim_x = [round(min(self.dados.loc[self.dados['submercado'] == self.referencia, 'ena']) / \
-                 mlt.loc[mlt['mes'] == mes, str(self.par_sub[0])].values[0], 1),
+                       mlt.loc[mlt['mes'] == mes, str(self.par_sub[0])].values[0], 1),
 
                  math.ceil(max(self.dados.loc[self.dados['submercado'] == self.referencia, 'ena']) / \
                            mlt.loc[mlt['mes'] == mes, str(self.par_sub[0])].values[0])
-                ]
+                 ]
 
         lim_y = [round(min(self.dados.loc[self.dados['submercado'] == self.par_sub[1], 'ena']) / \
-                            mlt.loc[mlt['mes'] == mes, str(self.par_sub[1])].values[0], 1),
+                       mlt.loc[mlt['mes'] == mes, str(self.par_sub[1])].values[0], 1),
 
                  math.ceil(max(self.dados.loc[self.dados['submercado'] == self.par_sub[1], 'ena']) / \
                            mlt.loc[mlt['mes'] == mes, str(self.par_sub[1])].values[0])
                  ]
 
-        #plt.xticks(np.arange(0, lim_x[1], round(lim_y[1] * 100) / 5000), rotation=30)
-        #plt.yticks(np.arange(0, lim_y[1], round(lim_x[1] * 100) / 1000))
+        # plt.xticks(np.arange(0, lim_x[1], round(lim_y[1] * 100) / 5000), rotation=30)
+        # plt.yticks(np.arange(0, lim_y[1], round(lim_x[1] * 100) / 1000))
         ticks_x = ax.get_xticks()
         ticks_y = ax.get_yticks()
         ax.set_xticklabels(['{:3.0f}%'.format(x * 100) for x in ticks_x])
@@ -536,7 +512,6 @@ class Desenho:
         # Salva figura
         plt.savefig(os.path.join(self.paths['export'], 'resultados.png'), bbox_inches='tight')
         return
-
 
     def desenha_scatter_ena_bruta(self, mes):
         subsistemas = ['SE', 'S', 'NE', 'N']
@@ -579,7 +554,6 @@ class Desenho:
         plt.ylabel(s='{} [MWm]'.format(subsistemas[self.par_sub[1] - 1]))
         plt.tick_params(axis='both', which='major', labelsize=9)
 
-
         lim_x = [round(min(self.dados.loc[self.dados['submercado'] == self.referencia, 'ena'])),
 
                  math.ceil(max(self.dados.loc[self.dados['submercado'] == self.referencia, 'ena']))
@@ -616,7 +590,6 @@ class Desenho:
         pass
         return
 
-
     def desenha_scatter_seaborn(self, mes):
         subsistemas = ['SE', 'S', 'NE', 'N']
         self.dados = pd.DataFrame(self.dados)
@@ -629,9 +602,9 @@ class Desenho:
         # itera classificando nos ranges definidos
         for i in self.config_plot.iterrows():
             aux = self.dados.loc[(self.dados['preco'] >= i[1].inferior) &
-                                              (self.dados['preco'] < i[1].superior) &
-                                              (self.dados['submercado'] == self.referencia), :
-                                ]['cenario']
+                                 (self.dados['preco'] < i[1].superior) &
+                                 (self.dados['submercado'] == self.referencia), :
+                  ]['cenario']
 
             self.dados.loc[self.dados['cenario'].isin(aux), ['group']] = i[1].texto
 
@@ -648,34 +621,35 @@ class Desenho:
         # calcula ena percentual subsistema de comparacao
         aux = self.dados.loc[self.dados.submercado == self.par_sub[1]].index
         self.dados.loc[aux, 'ena_p'] = self.dados.loc[aux, 'ena'] / self.mlt.loc[mes - 1, str(self.par_sub[1])] * 100
-
+        self.dados = pd.DataFrame(self.dados)
         # pega enas para formacao das enas
         aux = self.dados.loc[self.dados['submercado'] == self.referencia, ['cenario', 'ena', 'ena_p']]
         aux2 = self.dados.loc[self.dados['submercado'] == self.par_sub[1], ['cenario', 'ena', 'ena_p']]
 
         aux = aux.rename(columns={'ena': 'ena_bruta_{}'.format(subsistemas[self.referencia - 1]),
-                            'ena_p':'ena_p_{}'.format(subsistemas[self.referencia - 1])
-                            }
-                   )
+                                  'ena_p': 'ena_p_{}'.format(subsistemas[self.referencia - 1])
+                                  }
+                         )
         aux2 = aux2.rename(columns={'ena': 'ena_bruta_{}'.format(subsistemas[self.par_sub[1] - 1]),
-                             'ena_p': 'ena_p_{}'.format(subsistemas[self.par_sub[1] - 1])
-                            }
-                   )
+                                    'ena_p': 'ena_p_{}'.format(subsistemas[self.par_sub[1] - 1])
+                                    }
+                           )
 
         self.dados = pd.merge(self.dados, aux, on=['cenario'])
         self.dados = pd.merge(self.dados, aux2, on=['cenario'])
         self.dados.sort_values(by=['preco'], ascending=True, inplace=True)
+
         sns.set_style('ticks', {'axes.grid': True,
                                 'legend.frameon': True,
                                 'grid.linestyle': u'--',
                                 'legend.scatterpoints': 1
-                               }
+                                }
                       )
 
-        markers = ['o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'X'] * 10
+        markers = ['o', 'v', '8', '^', '*', 's', '>', '<', 'p', 'h', 'H', 'D', 'd', 'P', 'X'] * 10
         sns.set_context('notebook')
         sns.axes_style()
-        
+
         # Grafico ENA bruta
         sns.lmplot(x='ena_bruta_{}'.format(subsistemas[self.referencia - 1]),
                    y='ena_bruta_{}'.format(subsistemas[self.par_sub[1] - 1]),
@@ -695,13 +669,15 @@ class Desenho:
         plt.ylabel(s='ENA - {} [MWm]'.format(subsistemas[self.par_sub[1] - 1]))
         plt.legend(loc='best', fancybox=True, frameon=True, title='Classes PLD', facecolor='white')
         plt.minorticks_on()
-        plt.grid(b=True, which='both', linestyle= u'--')
+        plt.grid(b=True, which='both', linestyle=u'--')
         plt.title(s='Matriz de Precos GEVAZP - Mes {} - Mercado - {}'.format(mes, subsistemas[self.referencia - 1]),
                   loc='center')
         plt.savefig(os.path.join(self.paths['export'], '{}_resultado_b_{}_{}.png'.format(mes,
-                                                                                      str(subsistemas[self.referencia - 1]),
-                                                                                      str(subsistemas[self.par_sub[1] - 1])
-                                                                                      )
+                                                                                         str(subsistemas[
+                                                                                                 self.referencia - 1]),
+                                                                                         str(subsistemas[
+                                                                                                 self.par_sub[1] - 1])
+                                                                                         )
                                  )
                     )
         plt.close()
@@ -729,11 +705,11 @@ class Desenho:
         plt.title(s='Matriz de Precos GEVAZP - Mes {} - Mercado - {}'.format(mes, subsistemas[self.referencia - 1]),
                   loc='center')
         plt.savefig(os.path.join(self.paths['export'], '{}_resultado_p_{}_{}.png'.format(mes,
-                                                                                       str(subsistemas[
-                                                                                               self.referencia - 1]),
-                                                                                       str(subsistemas[
-                                                                                               self.par_sub[1] - 1])
-                                                                                       )
+                                                                                         str(subsistemas[
+                                                                                                 self.referencia - 1]),
+                                                                                         str(subsistemas[
+                                                                                                 self.par_sub[1] - 1])
+                                                                                         )
                                  )
                     )
         plt.close()
@@ -800,7 +776,7 @@ if __name__ == '__main__':
     import matplotlib.cm as cm
     import math
     import smtplib
-    from email.MIMEText import MIMEText
+    from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
     from Crypto.PublicKey import RSA
     import ast
@@ -808,14 +784,14 @@ if __name__ == '__main__':
     import seaborn as sns
 
     # Configuracao -----------------------------------------------------------------------------------------------------
-    mes = 12
-    paths = {'decomp_base': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\10\12\decomp_base',
-             'decks_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\10\12\decks',
-             'vazoes_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\10\12\gevazp_base',
+    mes = 2
+    paths = {'decomp_base': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2018\01\201802\decomp_base',
+             'decks_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2018\01\201802\decks',
+             'vazoes_gevazp': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2018\01\201802\gevazp_base',
              'executavel_gevazp': r'C:\Gevazp\gevazp',
              'arquivos_gevazp': r'C:\Gevazp',
-             'export': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\10\12\export_1',
-             'mlt': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2017\10\12'
+             'export': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2018\01\201802\export_1',
+             'mlt': r'C:\OneDrive\Middle Office\Middle\Decks\gevazp\2018\01\201802'
              }
 
     nomes = {'gevazp_exec': ['arquivos.dat', 'caso.dat', 'gevazp.dat', 'MODIF.DAT',
@@ -826,7 +802,7 @@ if __name__ == '__main__':
              'decomp_exec': ['dadger.rv0', 'hidr.dat', 'loss.dat', 'mlt.dat',
                              'vazoes.dat'
                              ],
-             'mlt':r'mlt.csv',
+             'mlt': r'mlt.csv',
              'public_key': 'public_key.txt',
              'senha_email': 'config.txt'
              }
@@ -838,11 +814,11 @@ if __name__ == '__main__':
                        'lic_decomp': r'deco.prm'
                        }
 
-    config_plot = {'valor_inicial': 150,
+    config_plot = {'valor_inicial': 40,
                    'n_classes': 15,
-                   'step': 40,
+                   'step': 20,
                    'sub_referencia': 1,
-                   'par_subs': [1, 3],
+                   'par_subs': [1, 4],
                    'retangulo': {'lower_left': (0.80, 0.70),
                                  'height': 0.50,
                                  'width': 0.25}
@@ -850,19 +826,18 @@ if __name__ == '__main__':
     config_email = {'from': 'multivac.gerenciador@gmail.com',
                     'to': ['multivac.gerenciador@gmail.com',
                            'anderson.visconti@enexenergia.com.br'
-                             ],
+                           ],
                     'servidor': 'smtp.gmail.com',
                     'porta': 587,
                     'user': 'multivac.gerenciador@gmail.com'
                     }
 
-
-    #  Determina se executap preparacao do ambiente gevazp ou apenas decomp - 1 para sim e 0 para nao
+    #  Determina se executar preparacao do ambiente gevazp ou apenas decomp - 1 para sim e 0 para nao
     execucao = {'ambiente': 0,
                 'gevazp': 0,
                 'decomp': 0,
-                'resultados': 0,
-                'desenho': 1,
+                'resultados': 1,
+                'desenho': 0,
                 'envia_email': 0,
                 'criptografia': 0
                 }
@@ -880,7 +855,7 @@ if __name__ == '__main__':
             parametros.append([caso, i])
 
     if execucao['gevazp'] == 1:
-        #p = Pool(1)
+        # p = Pool(1)
         p = Pool(cpu_count())
         result = p.map(func=executa_gevazp, iterable=parametros)
         print('Fim da execucao dso Gevazps')
@@ -891,7 +866,7 @@ if __name__ == '__main__':
         gerenciador.listar_casos()
         gerenciador.executar_decomp()
 
-    #  Captura dos resultados
+    # Captura dos resultados
     if execucao['resultados'] == 1:
         gerenciador = Gerenciador(paths=paths, nomes=nomes, config_servidor=config_servidor)
         gerenciador.listar_casos()
@@ -899,11 +874,11 @@ if __name__ == '__main__':
             gerenciador.pegar_resultado(cenario=i[1].cenario)
             gerenciador.exportar_resultados()
 
-    #  Monta grafico
+    # Monta grafico
     if execucao['desenho'] == 1:
         resultados = pd.read_csv(os.path.join(paths['export'], 'resultados.csv'), sep=';', decimal=',')
         mlt = pd.read_csv(os.path.join(paths['mlt'], nomes['mlt']), sep=';', decimal=',')
-        desenho = Desenho(paths=paths, nomes=nomes ,dados=resultados, config_plot=config_plot, mlt=mlt)
+        desenho = Desenho(paths=paths, nomes=nomes, dados=resultados, config_plot=config_plot, mlt=mlt)
         desenho.desenha_scatter_seaborn(mes=mes)
 
     if execucao['envia_email'] == 1:
