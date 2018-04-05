@@ -1,3 +1,5 @@
+# !/usr/bin/env python
+# *- coding: utf-8 -*-
 import openpyxl
 import os
 
@@ -28,9 +30,9 @@ for i, arquivo in enumerate(configs['paths_excel']):
 
     # Itera sobre o range completo
     for rows in sheet.iter_cols(
-            min_row=configs['coords_resultado']['ini']['row'], 
-            min_col=configs['coords_resultado']['ini']['col'], 
-            max_row=configs['coords_resultado']['fim']['row'], 
+            min_row=configs['coords_resultado']['ini']['row'],
+            min_col=configs['coords_resultado']['ini']['col'],
+            max_row=configs['coords_resultado']['fim']['row'],
             max_col=configs['coords_resultado']['fim']['col']
     ):
         prevs = open(
@@ -64,14 +66,14 @@ for i, arquivo in enumerate(configs['paths_excel']):
     vazpast = open(
        file=os.path.join(
            os.path.dirname(arquivo), 'vazpast_{}.dat'.format(os.path.basename(os.path.splitext(arquivo)[0]),)
-       ), 
+       ),
        mode='w'
     )
 
     # Escrita do Export
     export = open(
         file=os.path.join(
-            os.path.dirname(arquivo), 
+            os.path.dirname(arquivo),
             'export_{}.txt'.format(os.path.basename(os.path.splitext(arquivo)[0]),)
         ),
         mode='w'
@@ -79,11 +81,11 @@ for i, arquivo in enumerate(configs['paths_excel']):
 
     # Itera sobre o range completo
     for cols in sheet_vazpast.iter_rows(
-            min_row=configs['coords_vazpast']['ini']['row'], 
-            min_col=configs['coords_vazpast']['ini']['col'], 
-            max_row=configs['coords_vazpast']['fim']['row'], 
+            min_row=configs['coords_vazpast']['ini']['row'],
+            min_col=configs['coords_vazpast']['ini']['col'],
+            max_row=configs['coords_vazpast']['fim']['row'],
             max_col=configs['coords_vazpast']['fim']['col']
-    ):  
+    ):
         valores = [i.value for i in cols]
         for j in range(2, 13):
             valores[j] = float(valores[j])
@@ -100,5 +102,4 @@ for i, arquivo in enumerate(configs['paths_excel']):
 
     print('Arquivos vazpast e export do cenario {} criado'.format(os.path.basename(arquivo)))
     work_book.close()
-    
-    
+
