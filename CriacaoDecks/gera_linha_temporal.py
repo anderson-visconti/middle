@@ -1,5 +1,4 @@
 import openpyxl
-
 import os
 
 configs = {
@@ -7,20 +6,33 @@ configs = {
         r'C:\Users\anderson.visconti\Desktop\teste\1\LP_1.xlsm',
         r'C:\Users\anderson.visconti\Desktop\teste\2\LP_2.xlsm',
         r'C:\Users\anderson.visconti\Desktop\teste\3\LP_3.xlsm',
-
     ],
     'sheet_name': r'Resultado Final',
-    'vazpast': r'VazPast'
+    'vazpast': r'VazPast',
+    'coords_resultado': {
+        'ini': {'row': 4, 'col': 3},
+        'fim': {'row': 163, 'col': 14}
+    },
+    'coords_vazpast': {
+        'ini': {'row': 6, 'col': 5},
+        'fim': {'row': 221, 'col': 18}
+    },
+
 }
 
 # Escrita dos prevs
 for i, arquivo in enumerate(configs['paths_excel']):
-
     work_book = openpyxl.load_workbook(filename=arquivo, data_only=True)
     sheet = work_book[configs['sheet_name']]
     sheet_vazpast = work_book[configs['vazpast']]
 
-    for rows in sheet.iter_cols(min_row=4, min_col=3, max_row=163, max_col=14): # Itera sobre o range completo
+    # Itera sobre o range completo
+    for rows in sheet.iter_cols(
+            min_row=configs['coords_resultado']['ini']['row'], 
+            min_col=configs['coords_resultado']['ini']['col'], 
+            max_row=configs['coords_resultado']['fim']['row'], 
+            max_col=configs['coords_resultado']['fim']['col']
+    ):
         prevs = open(
             os.path.join(
                 os.path.dirname(arquivo),
@@ -50,31 +62,31 @@ for i, arquivo in enumerate(configs['paths_excel']):
 
     # Escrita do Vazpast
     vazpast = open(
-        os.path.join(
-            os.path.dirname(arquivo),
-            'vazpast_{}.dat'.format(
-                os.path.basename(os.path.splitext(arquivo)[0]),
-            )
-        ),
-        'w'
+       file=os.path.join(
+           os.path.dirname(arquivo), 'vazpast_{}.dat'.format(os.path.basename(os.path.splitext(arquivo)[0]),)
+       ), 
+       mode='w'
     )
 
     # Escrita do Export
     export = open(
-        os.path.join(
-            os.path.dirname(arquivo),
-            'export_{}.txt'.format(
-                os.path.basename(os.path.splitext(arquivo)[0]),
-            )
+        file=os.path.join(
+            os.path.dirname(arquivo), 
+            'export_{}.txt'.format(os.path.basename(os.path.splitext(arquivo)[0]),)
         ),
-        'w'
+        mode='w'
     )
 
-
-    for cols in sheet_vazpast.iter_rows(min_row=6, min_col=5, max_row=221, max_col=18):  # Itera sobre o range completo
+    # Itera sobre o range completo
+    for cols in sheet_vazpast.iter_rows(
+            min_row=configs['coords_vazpast']['ini']['row'], 
+            min_col=configs['coords_vazpast']['ini']['col'], 
+            max_row=configs['coords_vazpast']['fim']['row'], 
+            max_col=configs['coords_vazpast']['fim']['col']
+    ):  
         valores = [i.value for i in cols]
-        for i in range(2, 13):
-            valores[i] = float(valores[i])
+        for j in range(2, 13):
+            valores[j] = float(valores[j])
 
         vazpast.write(
             '{:>5d} ''{:11} ''{:>10.2f}''{:>10.2f}''{:>10.2f}''{:>10.2f}''{:>10.2f}''{:>10.2f}''{:>10.2f}'
@@ -88,4 +100,5 @@ for i, arquivo in enumerate(configs['paths_excel']):
 
     print('Arquivos vazpast e export do cenario {} criado'.format(os.path.basename(arquivo)))
     work_book.close()
-pass
+    
+    
