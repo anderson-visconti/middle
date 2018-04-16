@@ -109,7 +109,7 @@ def fLeRelato(FullPath):
     print('Cadastro dos postos e armazenamtos para o final do mes capturados (Estagio %s)' %(numEstagios))
     return vCadastro, vArm;
 
-def fEscreveDadger(Path, NomeArqv, vUH):
+def fEscreveDadger(Path, NomeArqv, vUH, penalidades_ree):
 
     '''
     Autor: Anderson Visconti
@@ -132,14 +132,15 @@ def fEscreveDadger(Path, NomeArqv, vUH):
                 aux.append('1')
 
             posto = linha[4:8].strip()
+            submercado = int(linha[9:12].strip())
 
             for i in range(0,len(vUH)): # Procura novo armazenamento
                 if vUH[i][0] == int(float(posto)):
-                    aux[3] = float(vUH[i][2])
+                    aux[3] = float(vUH[i][2]) * penalidades_ree[submercado]
                     break
 
                 else:
-                    aux[3] = float(aux[3])
+                    aux[3] = float(aux[3]) * penalidades_ree[submercado]
 
 
             NewFile.write('{0:>2}  {1:>3}  {2:>2}       {3:6.2f}               {4:>1}\n'.format(*aux))
@@ -199,7 +200,7 @@ def fEscreveDger(Path, Arqv, vArmRee):
 
     return
 
-def fEscreveConfhd(Path, vUH, vCadastro):
+def fEscreveConfhd(Path, vUH, vCadastro, penalidades_ree):
     '''
     Autor: Anderson Visconti
     Funcao que escreve armazenamentos no arquivo confhd
@@ -221,10 +222,11 @@ def fEscreveConfhd(Path, vUH, vCadastro):
             nome = linha[6:19].strip()
             posto = int(float(linha[19:24].strip()))
             fator = 1.0
+            ree = int(linha[31:35].strip())
             #arm = float(linha[36:41].strip())
 
             if posto == 227:
-                arm = float(linha[36:41].strip())
+                arm = float(linha[36:41].strip()) * penalidades_ree[ree]
                 pass
 
             if nome[0:4] == 'FICT':
@@ -243,11 +245,11 @@ def fEscreveConfhd(Path, vUH, vCadastro):
             for i in range(0,len(vUH)):
 
                 if usina == vUH[i][0]:
-                    arm = '{0:6.2f}'.format(vUH[i][2] * fator)
+                    arm = '{0:6.2f}'.format(vUH[i][2] * fator * penalidades_ree[ree])
                     NovaLinha = linha.replace(linha[35:41],arm)
                     break
                 else:
-                    arm = float(linha[36:41].strip())
+                    arm = float(linha[36:41].strip()) * penalidades_ree[ree]
                     arm = '{0:6.2f}'.format(arm)
                     NovaLinha = linha.replace(linha[35:41], arm)
 
@@ -263,7 +265,7 @@ def fEscreveConfhd(Path, vUH, vCadastro):
     return
 
 def fEncadeamento(Path, PathScript, nProc, nNos, numVersaoNewave, numVersaoDecomp, iniciaMPD, fileNos, dBinarios,
-                  lista_email) :
+                  lista_email, penalidades_ree) :
     '''
     Autor: Anderson Visconti
     Versao: 0
@@ -308,7 +310,7 @@ def fEncadeamento(Path, PathScript, nProc, nNos, numVersaoNewave, numVersaoDecom
                 print ('Escrevendo armazenamentos no arquivo confhd.dat')
                 #fEscreveDger(Path=os.path.join(PathL2,'newave'),Arqv='dadger.rv0',vArmRee=vArmRee)  # Escreve armazenamento no dger.dat
                 os.system('{0}/ConverteNomesArquivos'.format(dBinarios['newave']))  # Converte arquivos para minusculo e unix
-                fEscreveConfhd(Path=os.path.join(PathL2, 'newave'), vUH=vArm, vCadastro=vCadastro)
+                fEscreveConfhd(Path=os.path.join(PathL2, 'newave'), vUH=vArm, vCadastro=vCadastro, penalidades_ree=penalidades_ree)
 
             print ((os.path.join(PathL2, 'newave')))
             os.system('{0}/ConverteNomesArquivos'.format(dBinarios['newave'])) # Converte arquivos para minusculo e unix
@@ -326,7 +328,8 @@ def fEncadeamento(Path, PathScript, nProc, nNos, numVersaoNewave, numVersaoDecom
             if flag >= 1:  # Pula o primeiro mes
                 print ('Escrevendo armazenamentos no dadger.rv0')
                 os.system('{0}/convertenomesdecomp_{1}'.format(dBinarios['decomp'], numVersaoDecomp))
-                fEscreveDadger(Path=os.path.join(PathL2, 'decomp'), NomeArqv='dadger.rv0', vUH=vArm)  # Escreve armazenamento no dadger.rv0
+                fEscreveDadger(Path=os.path.join(PathL2, 'decomp'), NomeArqv='dadger.rv0', vUH=vArm,
+                               penalidades_ree=penalidades_ree)  # Escreve armazenamento no dadger.rv0
 
             print((os.path.join(PathL2, 'decomp')))
             os.system('{0}/convertenomesdecomp_{1}'.format(dBinarios['decomp'], numVersaoDecomp))
@@ -463,8 +466,6 @@ def fEnviaEmail(cenarios, listaMes, PathL1, lista_email):
     Cenario: {1}
     Mes: {2}
     Horario: {3:%d-%m-%Y %H:%M}
-
-
     ** Obs: e-mail enviado de forma automatica. Em caso de bugs, entre em contato com o administrador
     '''.format(*vDados)
 
@@ -500,7 +501,7 @@ def fResultadosDecomp(strPath, cenarios, listaMes, vResultados, vArmazenamentos)
     flag = 0
     # Leitura dados decomp -------------------------------------------------------------------------------------------------
     strPathDecomp = os.path.join ((os.path.join(strPath,'decomp')), 'relato.rv0') #(os.path.join(strPath,'decomp'))
-    print strPathDecomp
+    print(strPathDecomp)
     fileDecomp = open(strPathDecomp,'r')
     #fileExportDecomp = open(os.path.join(strPath,'custo.txt'),'w')
     for linha in fileDecomp:
@@ -559,7 +560,6 @@ def fCriaArquivCSV(PathL1, vResultados, cenarios, vArmazenamentos):
 
 def fRodaGevazp(path_base, path_caso, mes, ano,):
     '''
-
     :param path_base:
     :param path_caso:
     :param mes:
