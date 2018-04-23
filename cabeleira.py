@@ -1,73 +1,81 @@
-import os
-import pandas as pd
-import glob
-from bokeh.plotting import figure, output_file, show
-from bokeh.palettes import Category20
-from bokeh.models import HoverTool, CrosshairTool
-from bokeh.models import ColumnDataSource
+def filtra_valores(tipo, nome):
+    df_plot = df_previsao[
+        (df_previsao['Tipo'] == tipo)&
+        (df_previsao['Nome'] == nome)
+    ]
 
-path = os.path.dirname(os.path.realpath(__file__))
-arquivos = glob.glob(os.path.join(path, '*.csv'))
-df_previsao = pd.DataFrame()
+    df_plot = df_plot[['Data', 'Nome', 'ENA_MWmes', 'ano']]
 
-for i, arquivo in enumerate(arquivos):
-    ano = os.path.basename(arquivo)[6:10]
-    df = pd.read_csv(filepath_or_buffer=arquivo, sep=';', skiprows=57, decimal=',')
-    df['ano'] = int(ano)
-    df_previsao = pd.concat([df_previsao, df])
+    return df_plot
 
-df_previsao = df_previsao[df_previsao['Data'] != 'MEDIA']
-df_previsao['Data'] = pd.to_datetime(df_previsao['Data'], dayfirst=True)
-df_previsao['ENA_Percentual_MLT'] = df_previsao['ENA_Percentual_MLT'] / 100
-df_previsao = df_previsao[df_previsao['Nome'] == 'SUDESTE']
-df_previsao = df_previsao[df_previsao['Tipo'] == 'Submercado']
-df_previsao['ano'] = df_previsao['ano'].apply(lambda x: str(x))
-df_plot = df_previsao[['Data', 'Nome', 'ENA_MWmes', 'ano']]
-df_plot = df_plot.pivot(index='Data', columns='ano', values='ENA_MWmes')
-source = ColumnDataSource(df_plot)
+if __name__=='__main__':
+    import os
+    import pandas as pd
+    import glob
+    from math import pi
+    import plotly
+    from plotly import tools
+    import plotly.plotly as py
+    import plotly.graph_objs as go
 
-output_file("line.html")
-p = figure(x_axis_type='datetime', sizing_mode='scale_height')
+    path = os.path.dirname(os.path.realpath(__file__))
+    arquivos = glob.glob(os.path.join(path, '*.csv'))
+    df_previsao = pd.DataFrame()
 
-for i, coluna in enumerate(df_plot):
-    p.line(
-        x='Data',
-        y=coluna,
-        source=source,
-        line_color=Category20[20][i],
-        legend=coluna
+    for i, arquivo in enumerate(arquivos):
+        ano = os.path.basename(arquivo)[6:10]
+        df = pd.read_csv(filepath_or_buffer=arquivo, sep=';', skiprows=57, decimal=',')
+        df['ano'] = int(ano)
+        df_previsao = pd.concat([df_previsao, df])
+
+    # Carregdamento de todos os dados
+    df_previsao = df_previsao[df_previsao['Data'] != 'MEDIA']
+    df_previsao['Data'] = pd.to_datetime(df_previsao['Data'], dayfirst=True)
+    df_previsao['ENA_Percentual_MLT'] = df_previsao['ENA_Percentual_MLT'] / 100
+    x=df_previsao['Tipo'].unique()
+
+    fig = tools.make_subplots(
+        rows=2,
+        cols=2,
+        subplot_titles=(
+            'Sudeste',
+            'Sul',
+            'Nordeste',
+            'Norte'
+        )
     )
+    traces_submercado = []
 
-show(p)
+    # Iterando sobre todos
+    for j, submercado in enumerate(df_previsao.loc[df_previsao['Tipo'] == 'Submercado', 'Nome'].unique()):
 
-'''
-hover = HoverTool(
-    tooltips=[
-        ('data', '$sx{%F}'),
-        ('ENA', '$y{0,0.0}'),
-    ],
-    mode='vline',
-    formatters={'$sx': 'datetime', 'ENA': 'printf'}
-)
+        if submercado != 'SIN':
+            df_plot = filtra_valores(tipo='Submercado', nome=submercado)
+            traces = []
 
-cross_hair = CrosshairTool()
-tools = [cross_hair, hover]
+            # Itera sobre os anos
+            for i, ano in enumerate(df_plot.loc[:,'ano'].unique()):
+                traces = (
+                    dict(
+                        type='scatter',
+                        x=df_plot.loc[df_plot['ano'] == ano, 'Data'],
+                        y=df_plot.loc[df_plot['ano'] == ano, 'ENA_MWmes'],
+                        mode='lines',
+                        name=str(ano)
+                    )
+                )
 
-p = figure(x_axis_type='datetime', tools=tools, sizing_mode='scale_height')
+                if submercado == 'SUDESTE':
+                    fig.append_trace(traces, 1, 1)
 
-# add a line renderer
-xs = []
-ys = []
-cores = df_plot['ano'].unique().size
+                elif submercado == 'SUL':
+                    fig.append_trace(traces, 1, 2)
 
-for j, ano in enumerate(df_plot['ano'].unique()):
-    xs.append(df_plot.loc[df_plot['ano'] == ano, 'Data'])
-    ys.append(df_plot.loc[df_plot['ano'] == ano, 'ENA_MWmes'])
+                elif submercado == 'NORDESTE':
+                    fig.append_trace(traces, 2, 1)
 
-p.multi_line(
-    xs=xs,
-    ys=ys,
-    color=Category20[cores]
-)
-show(p)
-'''
+                elif submercado == 'NORTE':
+                    fig.append_trace(traces, 2, 2)
+
+    fig['layout'].update(showlegend=False, title='ENAS PLAN4_IA')
+    plotly.offline.plot(fig, filename='cabeleira.html')
