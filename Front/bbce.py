@@ -11,6 +11,9 @@ import os
 from datetime import datetime
 import locale
 import numpy as np
+meses = {
+    1:'JAN', 2:'FEV', 3:'MAR', 4:'ABR', 5:'MAI', 6:'JUN', 7:'JUL', 8:'AGO', 9:'SET', 10:'OUT', 11:'NOV', 12:'DEZ'
+}
 
 # localiza nomes dos meses em pt br
 locale.setlocale(locale.LC_ALL, '')
@@ -19,7 +22,7 @@ df_completo = pd.read_excel(
     io=os.path.join(os.path.dirname(__file__), 'bbce_negociacoes.xlsx'),
     header=None,
     skiprows=1,
-    names=['produto', 'tempo', 'mwh', 'mwm', 'preco', 'flag']
+    names=['produto', 'tempo', 'mwh', 'mwm', 'preco', 'flag'],
 )
 
 # arrumação dos dados
@@ -44,7 +47,9 @@ produtos = df_completo['produto'].unique()
 
 # Auth
 VALID_USERNAME_PASSWORD_PAIRS = [
-    ['anderson.visconti', 'Abrate01']
+    ['anderson.visconti', 'Abrate01'],
+    ['enex.energia', 'enex#01']
+
 ]
 app = dash.Dash(__name__)
 server = app.server
@@ -63,10 +68,11 @@ app.layout = html.Div([
             dcc.Dropdown(
                 id='produto',
                 options=[{'label': i, 'value': i} for i in produtos],
-                value='SE CON MEN {:%b/%y} - Preço Fixo'.format(datetime.now()).upper()
+                value='SE CON MEN {}/{:%y} - Preço Fixo'.format(
+                   meses[datetime.now().month], datetime.now()).upper()
             ),
         ],
-            style={'width': '50%', 'display': 'inline-block', 'float': 'left'}
+            style={'width': '40%', 'display': 'inline-block', 'float': 'left'}
         ),
 
         html.Div([
@@ -83,7 +89,7 @@ app.layout = html.Div([
             )
 
         ],
-            style={'width': '10%', 'display': 'inline-block', 'float': 'center'}),
+            style={'width': '8%', 'display': 'inline-block', 'float': 'center'}),
 
         # N desvios
         html.Div([
@@ -97,7 +103,7 @@ app.layout = html.Div([
                 value=2
             )
         ],
-            style={'width': '10%', 'display': 'inline-block', 'float': 'center'}),
+            style={'width': '8%', 'display': 'inline-block', 'float': 'center'}),
 
         # Media movel e Bollinger bandas
         html.Div([
@@ -113,8 +119,20 @@ app.layout = html.Div([
                 value=20
             )
         ],
-            style={'width': '10%', 'display': 'inline-block', 'float': 'center'})
+            style={'width': '8%', 'display': 'inline-block', 'float': 'center'}),
 
+        # mudanca pra candle ou preco medio
+        html.Div([
+            dcc.Dropdown(
+                id='visao',
+                options=[
+                    {'label': 'CandleSticks', 'value': 'CandleSticks'},
+                    {'label': 'Preco Medio', 'value': 'medio'}
+                ],
+                value='CandleSticks'
+            )
+        ],
+            style={'width': '15%', 'display': 'inline-block', 'float': 'center'}),
     ]),
 
     # selecao de datas
@@ -134,9 +152,14 @@ app.layout = html.Div([
     # grafico
     html.Div([
         dcc.Graph(
-            id='bbce'
+            id='bbce',
+            config=dict(
+                displayModeBar=False
+            ),
         )
-    ]),
+    ],
+        style={'width': '100%', 'height': '100%', 'display': 'inline-block', 'float':'center'}
+    ),
 
 ])
 
@@ -162,15 +185,18 @@ def update_data_inicial(produto):
         dash.dependencies.Input('date_picker', 'start_date'),
         dash.dependencies.Input('date_picker', 'end_date'),
         dash.dependencies.Input('dp', 'value'),
-        dash.dependencies.Input('media_movel', 'value')
+        dash.dependencies.Input('media_movel', 'value'),
+        dash.dependencies.Input('visao', 'value')
     ])
-def update_figure(produto, discretizacao, start_date, end_date, dp, media_movel):
+def update_figure(produto, discretizacao, start_date, end_date, dp, media_movel, visao):
     aggregation = {
         'preco': {
             'preco_medio': 'mean',
             'preco_max': 'max',
             'preco_min': 'min',
-            'preco_vol': 'std'
+            'preco_vol': 'std',
+            'preco_ini': 'first',
+            'preco_fim': 'last'
         },
         'mwm': {
             'mwm_soma': 'sum'
@@ -193,51 +219,64 @@ def update_figure(produto, discretizacao, start_date, end_date, dp, media_movel)
     # preco medio ponderado
     df_filtrado['preco_medio'] = df_filtrado['financeiro_soma'] / df_filtrado['mwm_soma']
 
-    # criacao da MM e bollinger bands
-    df_filtrado['media_movel'] = \
-        df_filtrado['preco_medio'].rolling(
+    if visao == 'CandleSticks':
+        # criacao da MM e bollinger bands
+        df_filtrado['media_movel'] = df_filtrado['preco_fim'].rolling(
             min_periods=1,
             center=False,
             window=media_movel
         ).mean()
 
-    df_filtrado['media_movel_c'] = \
-        df_filtrado['preco_medio'].rolling(
+        df_filtrado['vol_p'] = df_filtrado['preco_fim'] + dp * df_filtrado['preco_fim'].rolling(
             min_periods=1,
-            center=True,
+            center=False,
+            window=media_movel
+        ).std()
+
+        df_filtrado['vol_n'] = df_filtrado['preco_fim'] - dp * df_filtrado['preco_fim'].rolling(
+            min_periods=1,
+            center=False,
+            window=media_movel
+        ).std()
+
+    elif visao == 'medio':
+        # criacao da MM e bollinger bands
+        df_filtrado['media_movel'] = df_filtrado['preco_medio'].rolling(
+            min_periods=1,
+            center=False,
             window=media_movel
         ).mean()
 
-    df_filtrado['vol_p'] = df_filtrado['preco_medio'] + \
-                           dp * df_filtrado['preco_vol'].rolling(
-        min_periods=1,
-        center=False,
-        window=media_movel
-    ).std()
+        df_filtrado['vol_p'] = df_filtrado['preco_medio'] + dp * df_filtrado['preco_vol'].rolling(
+            min_periods=1,
+            center=False,
+            window=media_movel
+        ).std()
 
-    df_filtrado['vol_n'] = df_filtrado['preco_medio'] - \
-                           dp * df_filtrado['preco_vol'].rolling(
-        min_periods=1,
-        center=False,
-        window=media_movel
-    ).std()
+        df_filtrado['vol_n'] = df_filtrado['preco_medio'] - dp * df_filtrado['preco_vol'].rolling(
+            min_periods=1,
+            center=False,
+            window=media_movel
+        ).std()
 
-    df_filtrado['mm_volume'] = df_filtrado['mwm_soma'].rolling(
-        min_periods=1,
-        center=False,
-        window=media_movel
-    ).mean()
+    df_filtrado['mm_volume'] = df_filtrado['mwm_soma'].rolling(min_periods=1, center=False, window=media_movel).mean()
 
-    df_filtrado.to_csv(
-        path_or_buf=os.path.join(os.path.dirname(__file__), 'export.csv'),
-        decimal=',',
-        sep=';'
+    # Criacao dos candles
+    trace_candle = go.Candlestick(
+        x=df_filtrado.index,
+        yaxis='y',
+        name='candle',
+        open=df_filtrado['preco_ini'],
+        high=df_filtrado['preco_max'],
+        low=df_filtrado['preco_min'],
+        close=df_filtrado['preco_fim'],
     )
 
     # Criacao dos tracos
     trace_preco_medio = go.Scatter(
         x=df_filtrado.index,
         y=df_filtrado['preco_medio'],
+        yaxis='y',
         name='Preco Medio',
         mode='lines+markers',
         connectgaps=False,
@@ -250,7 +289,8 @@ def update_figure(produto, discretizacao, start_date, end_date, dp, media_movel)
     trace_preco_vol_p = go.Scatter(
         x=df_filtrado.index,
         y=df_filtrado['vol_p'],
-        name='{}*Vol+'.format(dp),
+        yaxis='y',
+        name='Vol'.format(dp),
         legendgroup='Vol',
         mode='lines',
         connectgaps=False,
@@ -264,7 +304,9 @@ def update_figure(produto, discretizacao, start_date, end_date, dp, media_movel)
     trace_preco_vol_n = go.Scatter(
         x=df_filtrado.index,
         y=df_filtrado['vol_n'],
-        name='{}*Vol-'.format(dp),
+        yaxis='y',
+        name='Vol'.format(dp),
+        showlegend=False,
         legendgroup='Vol',
         mode='lines',
         connectgaps=False,
@@ -278,6 +320,7 @@ def update_figure(produto, discretizacao, start_date, end_date, dp, media_movel)
     trace_media_movel = go.Scatter(
         x=df_filtrado.index,
         y=df_filtrado['media_movel'],
+        yaxis='y',
         name='MM{}'.format(media_movel),
         mode='lines',
         connectgaps=False,
@@ -291,6 +334,7 @@ def update_figure(produto, discretizacao, start_date, end_date, dp, media_movel)
     trace_volume = go.Bar(
         x=df_filtrado.index,
         y=df_filtrado['mwm_soma'],
+        yaxis='y2',
         name='Volume',
         marker=dict(
             color='#E74C3C'
@@ -300,6 +344,7 @@ def update_figure(produto, discretizacao, start_date, end_date, dp, media_movel)
     trace_media_movel_volume = go.Scatter(
         x=df_filtrado.index,
         y=df_filtrado['mm_volume'],
+        yaxis='y2',
         name='MM{} - Volume'.format(media_movel),
         mode='lines',
         connectgaps=False,
@@ -308,17 +353,19 @@ def update_figure(produto, discretizacao, start_date, end_date, dp, media_movel)
             color='#F4D03F'
         )
     )
+    layout = dict()
+    data = list()
+    fig = dict(data=data, layout=layout)
+    if visao == 'CandleSticks':
+        fig['data'].append(trace_candle)
+    else:
+        fig['data'].append(trace_preco_medio)
 
-    fig = tools.make_subplots(
-        rows=2, cols=1,
-        shared_xaxes=True
-    )
-    fig.append_trace(trace_preco_medio, 1, 1)
-    fig.append_trace(trace_preco_vol_p, 1, 1)
-    fig.append_trace(trace_preco_vol_n, 1, 1)
-    fig.append_trace(trace_media_movel, 1, 1)
-    fig.append_trace(trace_volume, 2, 1)
-    fig.append_trace(trace_media_movel_volume, 2, 1)
+    fig['data'].append(trace_media_movel)
+    fig['data'].append(trace_preco_vol_p)
+    fig['data'].append(trace_preco_vol_n)
+    fig['data'].append(trace_volume)
+    fig['data'].append(trace_media_movel_volume)
 
     # Definicao do layout da figura
     fig['layout'].update(
@@ -338,17 +385,61 @@ def update_figure(produto, discretizacao, start_date, end_date, dp, media_movel)
             titlefont=dict(
                 size=12
             ),
-            domain=[0.25, 1.0],
+            domain=[0.30, 1.0],
             hoverformat='.2f'
         ),
-        xaxis1=dict(
+        xaxis=dict(
+            autorange=True,
             autotick=True,
             showgrid=True,
             showticklabels=True,
-            domain=[0, 1.0],
+            domain=[0, 0.95],
+            rangeselector=dict(
+                x=0.05,
+                y=1.0,
+                visible=True,
+                buttons=list([
+                    dict(
+                        count=1,
+                        label='1m',
+                        step='month',
+                        stepmode='backward'
+                    ),
+                    dict(
+                        count=2,
+                        label='2m',
+                        step='month',
+                        stepmode='backward'
+                    ),
+                    dict(
+                        count=3,
+                        label='3m',
+                        step='month',
+                        stepmode='backward'
+                    ),
+                    dict(
+                        count=6,
+                        label='6m',
+                        step='month',
+                        stepmode='backward'
+                    ),
+                    dict(
+                        count=1,
+                        label='1y',
+                        step='year',
+                        stepmode='todate'
+                    ),
+                    dict(step='all'),
+                ]),
+            ),
+            rangeslider=dict(
+                visible=False
+            ),
+            type='date',
 
         ),
         yaxis2=dict(
+            autorange=True,
             autotick=True,
             showgrid=True,
             showticklabels=True,
@@ -357,16 +448,10 @@ def update_figure(produto, discretizacao, start_date, end_date, dp, media_movel)
                 size=12
             ),
             domain=[0.0, 0.20],
-            hoverformat='.2f'
+            hoverformat='.2f',
         ),
-        xaxis2=dict(
-            autotick=True,
-            showgrid=True,
-            showticklabels=True,
-            domain=[0, 1.0],
-
-        )
     )
+
     return fig
 
 
