@@ -4,13 +4,14 @@ import dash
 import dash_auth
 import dash_core_components as dcc
 import dash_html_components as html
+from dash.dependencies import Input, Output
 import plotly.graph_objs as go
-from plotly import tools
 import pandas as pd
 import os
 from datetime import datetime
 import locale
-import numpy as np
+import base64
+import io
 meses = {
     1:'JAN', 2:'FEV', 3:'MAR', 4:'ABR', 5:'MAI', 6:'JUN', 7:'JUL', 8:'AGO', 9:'SET', 10:'OUT', 11:'NOV', 12:'DEZ'
 }
@@ -18,33 +19,152 @@ meses = {
 # localiza nomes dos meses em pt br
 locale.setlocale(locale.LC_ALL, '')
 
-df_completo = pd.read_excel(
-    io=os.path.join(os.path.dirname(__file__), 'bbce_negociacoes.xlsx'),
-    header=None,
-    skiprows=1,
-    names=['produto', 'tempo', 'mwh', 'mwm', 'preco', 'flag'],
-)
+def carrega_base():
 
-# arrumação dos dados
-df_completo['tempo'] = pd.to_datetime(df_completo['tempo'], dayfirst=True)
-df_completo['flag'] = df_completo['flag'].str.slice(0, 1)
-df_completo['submercado'] = df_completo['produto'].str.slice(0, 2)
-df_completo['tipo_energia'] =  df_completo['produto'].str.slice(3, 6)
-df_completo['tipo_energia'] =  df_completo['tipo_energia'].str.strip()
+    df_completo = pd.read_excel(
+        io=os.path.join(os.path.dirname(__file__), 'bbce_negociacoes.xlsx'),
+        header=None,
+        skiprows=1,
+        names=['produto', 'tempo', 'mwh', 'mwm', 'preco', 'flag'],
+    )
 
-df_completo['tipo_periodo'] = df_completo['produto'].str.slice(6, 10)
-df_completo['tipo_periodo'] = df_completo['tipo_periodo'].str.strip()
-df_completo['produto'] = df_completo['produto'].str.upper()
-df_completo.sort_values(by=['submercado', 'tipo_energia', 'tipo_periodo'])
-df_completo['financeiro'] = df_completo['preco'] * df_completo['mwm']
+    # arrumação dos dados
+    df_completo['tempo'] = pd.to_datetime(df_completo['tempo'], dayfirst=True)
+    df_completo['flag'] = df_completo['flag'].str.slice(0, 1)
+    df_completo['submercado'] = df_completo['produto'].str.slice(0, 2)
+    df_completo['tipo_energia'] =  df_completo['produto'].str.slice(3, 6)
+    df_completo['tipo_energia'] =  df_completo['tipo_energia'].str.strip()
 
-# remoção das operações canceladas
-df_completo = df_completo.loc[df_completo['flag'] == 'N']
+    df_completo['tipo_periodo'] = df_completo['produto'].str.slice(6, 10)
+    df_completo['tipo_periodo'] = df_completo['tipo_periodo'].str.strip()
+    df_completo['produto'] = df_completo['produto'].str.upper()
+    df_completo.sort_values(by=['submercado', 'tipo_energia', 'tipo_periodo'])
+    df_completo['financeiro'] = df_completo['preco'] * df_completo['mwm']
 
-produtos = df_completo['produto'].unique()
+    # remoção das operações canceladas
+    df_completo = df_completo.loc[df_completo['flag'] == 'N']
+
+    return df_completo
+
+def cria_layout():
+    # layout
+    layout = html.Div([
+        # dropdown menus
+        html.Div([
+
+            html.Div([
+                dcc.Dropdown(
+                    id='produto',
+                    options=[{'label': i, 'value': i} for i in df_completo['produto'].unique()],
+                    value='SE CON MEN {}/{:%y} - Preço Fixo'.format(
+                       meses[datetime.now().month], datetime.now()).upper()
+                ),
+            ],
+                style={'width': '40%', 'display': 'inline-block', 'float': 'left'}
+            ),
+
+            html.Div([
+                dcc.Dropdown(
+                    id='discretizacao',
+                    options=[
+                        {'label': '3 h', 'value': '3H'},
+                        {'label': '1 D', 'value': '1D'},
+                        {'label': '2 D', 'value': '2D'},
+                        {'label': '1 S', 'value': '7D'},
+                        {'label': '1 M', 'value': '1M'}
+                    ],
+                    value='1D'
+                )
+
+            ],
+                style={'width': '8%', 'display': 'inline-block', 'float': 'center'}),
+
+            # N desvios
+            html.Div([
+                dcc.Dropdown(
+                    id='dp',
+                    options=[
+                        {'label': '1 D.P', 'value': 1},
+                        {'label': '2 D.P', 'value': 2},
+                        {'label': '3 D.P', 'value': 3}
+                    ],
+                    value=2
+                )
+            ],
+                style={'width': '8%', 'display': 'inline-block', 'float': 'center'}),
+
+            # Media movel e Bollinger bandas
+            html.Div([
+                dcc.Dropdown(
+                    id='media_movel',
+                    options=[
+                        {'label': 'MM20', 'value': 20},
+                        {'label': 'MM12', 'value': 12},
+                        {'label': 'MM8', 'value': 8},
+                        {'label': 'MM5', 'value': 5},
+                        {'label': 'MM3', 'value': 3},
+                    ],
+                    value=12
+                )
+            ],
+                style={'width': '8%', 'display': 'inline-block', 'float': 'center'}),
+
+            # mudanca pra candle ou preco medio
+            html.Div([
+                dcc.Dropdown(
+                    id='visao',
+                    options=[
+                        {'label': 'CandleSticks', 'value': 'CandleSticks'},
+                        {'label': 'Preco Medio', 'value': 'medio'}
+                    ],
+                    value='CandleSticks'
+                )
+            ],
+                style={'width': '15%', 'display': 'inline-block', 'float': 'center'}),
+        ]),
+
+        # selecao de datas e upload
+        html.Div([
+            # botao de escolha de datas
+            html.Div([
+                dcc.DatePickerRange(
+                    id='date_picker',
+                    start_date=df_completo['tempo'].min(),
+                    end_date=datetime.today(),
+                    display_format='DD-MM-YYYY',
+                    with_portal=False,
+                ),
+
+            ],
+                style={
+                    'display': 'table-cell',
+                    'verticalAlign': 'middle'
+                }
+            ),
+
+        ],
+            style={
+                'display': 'table'
+            }
+        ),
+
+        # grafico
+        html.Div([
+            dcc.Graph(
+                id='bbce',
+                style={'height': '85vh', 'width': '90vw'}
+            )
+        ],
+            style={'height': '85vh', 'width': '90vw'}
+        ),
+
+    ])
+    return layout
+
+# carga inicial
+df_completo = carrega_base()
+
 # criação da instancia dash
-
-
 # Auth
 VALID_USERNAME_PASSWORD_PAIRS = [
     ['anderson.visconti', 'Abrate01'],
@@ -59,109 +179,8 @@ auth = dash_auth.BasicAuth(
     VALID_USERNAME_PASSWORD_PAIRS
 )
 
-# layout
-app.layout = html.Div([
-    # dropdown menus
-    html.Div([
-
-        html.Div([
-            dcc.Dropdown(
-                id='produto',
-                options=[{'label': i, 'value': i} for i in produtos],
-                value='SE CON MEN {}/{:%y} - Preço Fixo'.format(
-                   meses[datetime.now().month], datetime.now()).upper()
-            ),
-        ],
-            style={'width': '40%', 'display': 'inline-block', 'float': 'left'}
-        ),
-
-        html.Div([
-            dcc.Dropdown(
-                id='discretizacao',
-                options=[
-                    {'label': '3 h', 'value': '3H'},
-                    {'label': '1 D', 'value': '1D'},
-                    {'label': '2 D', 'value': '2D'},
-                    {'label': '1 S', 'value': '7D'},
-                    {'label': '1 M', 'value': '1M'}
-                ],
-                value='1D'
-            )
-
-        ],
-            style={'width': '8%', 'display': 'inline-block', 'float': 'center'}),
-
-        # N desvios
-        html.Div([
-            dcc.Dropdown(
-                id='dp',
-                options=[
-                    {'label': '1 D.P', 'value': 1},
-                    {'label': '2 D.P', 'value': 2},
-                    {'label': '3 D.P', 'value': 3}
-                ],
-                value=2
-            )
-        ],
-            style={'width': '8%', 'display': 'inline-block', 'float': 'center'}),
-
-        # Media movel e Bollinger bandas
-        html.Div([
-            dcc.Dropdown(
-                id='media_movel',
-                options=[
-                    {'label': 'MM20', 'value': 20},
-                    {'label': 'MM12', 'value': 12},
-                    {'label': 'MM8', 'value': 8},
-                    {'label': 'MM5', 'value': 5},
-                    {'label': 'MM3', 'value': 3},
-                ],
-                value=20
-            )
-        ],
-            style={'width': '8%', 'display': 'inline-block', 'float': 'center'}),
-
-        # mudanca pra candle ou preco medio
-        html.Div([
-            dcc.Dropdown(
-                id='visao',
-                options=[
-                    {'label': 'CandleSticks', 'value': 'CandleSticks'},
-                    {'label': 'Preco Medio', 'value': 'medio'}
-                ],
-                value='CandleSticks'
-            )
-        ],
-            style={'width': '15%', 'display': 'inline-block', 'float': 'center'}),
-    ]),
-
-    # selecao de datas
-    html.Div([
-        dcc.DatePickerRange(
-            id='date_picker',
-            start_date=df_completo['tempo'].min(),
-            end_date=datetime.today(),
-            display_format= 'DD-MM-YYYY',
-            with_portal=False
-        ),
-
-    ],
-            style={'width': '50%', 'height': '5%', 'display': 'inline-block', 'float':'center'}
-    ),
-
-    # grafico
-    html.Div([
-        dcc.Graph(
-            id='bbce',
-            config=dict(
-                displayModeBar=False
-            ),
-        )
-    ],
-        style={'width': '100%', 'height': '100%', 'display': 'inline-block', 'float':'center'}
-    ),
-
-])
+# criacao layout
+app.layout = cria_layout()
 
 @app.callback(
     dash.dependencies.Output('date_picker', 'start_date'),
@@ -205,7 +224,6 @@ def update_figure(produto, discretizacao, start_date, end_date, dp, media_movel,
             'financeiro_soma': 'sum'
         }
     }
-
     df_filtrado = pd.DataFrame(df_completo.loc[df_completo['produto'] == produto, :])
     df_filtrado = df_filtrado.resample(rule=discretizacao, on='tempo').agg(aggregation)
     df_filtrado.columns = df_filtrado.columns.droplevel(level=0)
@@ -227,13 +245,13 @@ def update_figure(produto, discretizacao, start_date, end_date, dp, media_movel,
             window=media_movel
         ).mean()
 
-        df_filtrado['vol_p'] = df_filtrado['preco_fim'] + dp * df_filtrado['preco_fim'].rolling(
+        df_filtrado['vol_p'] = df_filtrado['media_movel'] + dp * df_filtrado['preco_fim'].rolling(
             min_periods=1,
             center=False,
             window=media_movel
         ).std()
 
-        df_filtrado['vol_n'] = df_filtrado['preco_fim'] - dp * df_filtrado['preco_fim'].rolling(
+        df_filtrado['vol_n'] = df_filtrado['media_movel'] - dp * df_filtrado['preco_fim'].rolling(
             min_periods=1,
             center=False,
             window=media_movel
@@ -371,6 +389,8 @@ def update_figure(produto, discretizacao, start_date, end_date, dp, media_movel,
     fig['layout'].update(
         title = produto,
         autosize = True,
+        #width=1200,
+        #height=1200,
         legend = dict(
             orientation='v',
             font=dict(
@@ -456,4 +476,4 @@ def update_figure(produto, discretizacao, start_date, end_date, dp, media_movel,
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server()
