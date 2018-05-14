@@ -8,8 +8,12 @@ def worker(parametros):
     # Preparacao
     os.chdir(parametros[1]) # muda de diretorio
     copyfile(src=parametros[3], dst=r'{}\{}'.format(parametros[1], 'encad.dat'))    # copia licenca
-    map(os.remove, glob.glob("*_fut.dat"))  # remove arquivo de previsao
-
+    # remocao do arquivo, caso exista
+    try:
+        map(os.remove, glob.glob("*_fut.dat"))  # remove arquivo de previsao
+        os.remove(os.path.join(parametros[1], '{}_fut.dat'.format(parametros[0])))
+    except OSError:
+        pass
     # Execucao do previvaz
 
     print ('Executando posto -> {:>3}'.format(parametros[0]))
@@ -32,7 +36,6 @@ def worker(parametros):
 
     return df_previsao
 
-
 def le_banco(path):
     import pyodbc
 
@@ -46,7 +49,6 @@ def le_banco(path):
     df_limites = pd.read_sql_query('select * from LimitesPrevisao', conn)
     df_postos = pd.read_sql_query('select * from Postos', conn)
     return df_dados_gerais, df_opcoes, df_dados_semanais, df_dados_complemento, df_limites, df_postos
-
 
 def cria_arquivos(parametros):
     import os
@@ -160,7 +162,6 @@ def cria_arquivos(parametros):
 
 
 if __name__ == '__main__':
-
     from multiprocessing import cpu_count, Pool
     import os
     import pandas as pd
@@ -172,8 +173,6 @@ if __name__ == '__main__':
     print(r'Execucao em {} processos'.format(cpu_count()))
     p = Pool(processes=cpu_count())
     #p = Pool(processes=1)
-
-
     config_exec = {'path': r'C:\ENCAD3~1.0\Previvaz\bin\previvaz',
                    'exec': r'previvaz',
                    'licenca': r'C:\OneDrive\Middle Office\Middle',
@@ -210,8 +209,6 @@ if __name__ == '__main__':
     folders = pd.Series(os.listdir(path['caso']))
     folders =  folders[(folders.isin(['Previvaz.mdb', 'Previvaz.ldb']) == False)].astype(int).sort_values()
     parametros = []
-
-    parametros = []
     folders = os.listdir(path['caso'])
     for folder in folders:
         if folder not in  ['Previvaz.mdb', 'Previvaz.ldb']:
@@ -240,4 +237,4 @@ if __name__ == '__main__':
                        )
 
     print ('Processo Finalizado')
-    print ('Tempo Total: {}s'.format((datetime.now() - t1).total_seconds()))
+    print ('Tempo Total: {:3.2f}s'.format((datetime.now() - t1).total_seconds()))
