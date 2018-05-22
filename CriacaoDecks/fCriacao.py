@@ -24,6 +24,7 @@ def fLePmoDat(strPath, strNomeArqv):
     vProgTermica = []       # Indisponibilidade Programada Termica
     vForcadaTermica = []    # Indisponibilidade Forcada Termica
     vCustoTermica = []      # CVU
+    vCustoTermicaMes = []   # CVU - Estrutural + Conjuntural
     # ------------------------------------------------------------------------------------------------------------------
     contX = 0
     contIndisp = 0
@@ -87,6 +88,26 @@ def fLePmoDat(strPath, strNomeArqv):
                     aux[2] = ['SUDESTE', 'SUL', 'NORDESTE', 'NORTE'].index(aux[2]) + 1  # transforma nome do subsistema em numero
                     vConfigTerm.append(aux)
 
+
+                linha = filePMO.readline()
+        # --------------------------------------------------------------------------------------------------------------
+
+        # Captura CVU - Estrutural + Conjuntural (Sera a disponibilidade do bloco CT)-------------------------------------------
+        if linha.strip() == 'CUSTO DAS CLASSES TERMICAS ($/MWH)':
+            contX = 0
+            while contX < 3:
+
+                if linha.strip()[0:1] == 'X':
+                    contX = contX + 1
+
+                if contX == 2 and linha.strip()[0:1] != 'X':
+
+                    if linha[2:9].strip() != '' and linha[2:9].strip() not in ['86', '15']:    # Pega o codigo da usina
+                        CodUsinaTermica = linha[2:9].strip()    # Cod Usina Termica
+                        NomeUsinaTermica= linha[9:22].strip()   # Nome Usina Termica
+
+                    aux = [CodUsinaTermica, NomeUsinaTermica, (' '.join(linha[24:].split())).split(' ')] # Dados Cod,Nome,[Ano,Ger Max por mes]
+                    vCustoTermicaMes.append(aux)
 
                 linha = filePMO.readline()
         # --------------------------------------------------------------------------------------------------------------
@@ -196,7 +217,9 @@ def fLePmoDat(strPath, strNomeArqv):
                 linha = filePMO.readline()
         # --------------------------------------------------------------------------------------------------------------
 
-    return vMercado, vPequenas,vConfigTerm,vMinTermica,vMaxTermica,vProgTermica,vForcadaTermica,vCustoTermica,vMercadoAdic
+    return vMercado, vPequenas, vConfigTerm, vMinTermica, vMaxTermica, vProgTermica, vForcadaTermica, vCustoTermica,\
+           vMercadoAdic, vCustoTermicaMes
+
 
 def fLeExpH(strPath, strNomeArqv):
     '''
@@ -228,10 +251,12 @@ def fLeExpH(strPath, strNomeArqv):
 
     return vExpansao
 
+
 def fLeModifDat(strPath, strNomeArqv):
 
     import os
     vVE = []    # Vetor com dados para bloco VE
+    vFuga = []  # Vetor com dados de canal de fuga
 
     strFullPath = os.path.join(strPath,strNomeArqv)
     file = open(strFullPath,'r')
@@ -246,7 +271,12 @@ def fLeModifDat(strPath, strNomeArqv):
             dados = (' '.join(linha[10:].split())).split(' ')
             vVE.append([usina,dados])
 
-    return vVE
+        if linha[0:10].strip() == 'CFUGA':  # Pega valores de canal de fuga
+            dados = (' '.join(linha[10:].split())).split(' ')
+            vFuga.append([usina, dados])
+
+    return vVE, vFuga
+
 
 def fLePatamarDat(strPath, strNomeArqv, intAnoInicial, intAnoFinal):
     '''
@@ -316,6 +346,7 @@ def fLePatamarDat(strPath, strNomeArqv, intAnoInicial, intAnoFinal):
 
     return vDuracao, vCargaPU
 
+
 def fLeCadUHs(strPath, strNomeArqv, strDelimitador):
 
     import csv
@@ -335,6 +366,7 @@ def fLeCadUHs(strPath, strNomeArqv, strDelimitador):
             vDadosHidro.append(linha)
 
     return vDadosHidro
+
 
 def fCarregaFeriados(strPath, strNomeArqv, strDelimitador):
     '''
@@ -362,6 +394,7 @@ def fCarregaFeriados(strPath, strNomeArqv, strDelimitador):
     vFeriados = vFeriados[1:]
     return vFeriados
 
+
 def fLeDesvAguaDat(strPath, strNomeArqv):
     import os
     flag = 0
@@ -384,6 +417,7 @@ def fLeDesvAguaDat(strPath, strNomeArqv):
             vDesvAgua.append([auxDados,aux])
 
     return vDesvAgua
+
 
 def fCalculaEstagios(strDataInicial, vMeses, EstM1, vFeriados, vAnos):
     '''
@@ -462,6 +496,7 @@ def fCalculaEstagios(strDataInicial, vMeses, EstM1, vFeriados, vAnos):
           )
     return vHorasDP, IntDiasMes2
 
+
 def fLeConfigArvores(strPath, strArqv, strDelimitador):
     import csv
     import os
@@ -477,9 +512,10 @@ def fLeConfigArvores(strPath, strArqv, strDelimitador):
 
     return vConfigArvores
 
+
 def fEscreveDadger(strPathSource, strPathExport, strNomeArqv, vMeses, vAnos, vConfigTerm, vMinTermica, vMaxTermica,
                    vCustoTermica, EstM1, vCargaPU, vBlocoDP, IntDiasMes2, vMercado, vPequenas, vDesvAgua, vDadosHidro,
-                   vConfigArvores, vRee, vVe):
+                   vConfigArvores, vRee, vVe, vCustoTermicaMes):
 
     import os
     from datetime import datetime
@@ -506,7 +542,8 @@ def fEscreveDadger(strPathSource, strPathExport, strNomeArqv, vMeses, vAnos, vCo
         #---------------------------------------------------------------------------------------------------------------
 
         # Blocos que so serao repetidos --------------------------------------------------------------------------------
-        if DadosOriginais[i][0:2] in ['SB','UH','UE','CD','TX','GP','NI','FU', 'CQ', 'CV', 'AC', 'AR', 'EZ', 'CA', 'EA','IR', 'CI', 'VI', 'QI', 'FI']:
+        if DadosOriginais[i][0:2] in ['SB','UH','UE','CD','TX','GP','NI','FU', 'CQ', 'CV', 'AC', 'AR', 'EZ', 'CA',
+                                      'EA','IR', 'CI', 'VI', 'QI', 'FI', 'FT']:
 
             if DadosOriginais[i][0:2] == 'SB':  # Pega informacoes do subsistema
                 vSubsistemas.append((' '.join(DadosOriginais[i].split())).split(' '))
@@ -598,7 +635,6 @@ def fEscreveDadger(strPathSource, strPathExport, strNomeArqv, vMeses, vAnos, vCo
                     for j in range(0,len(vMaxTermica)): # Itera sobre a sazo de ger. max e ger.min
 
                         if vConfigTerm[i][0] == vMaxTermica[j][0] and str(vAnos[0]) == vMaxTermica[j][2][0]: # Verifica Cod da usina e ano
-
                             vDisponibilidade = \
                                 [int(float(vMaxTermica[j][2][vMeses[0]])),  # Primeiro estagio
                                  int(float(vMaxTermica[j + (vAnos[1] - vAnos[0])][2][vMeses[1]])) # Segundo estagio
@@ -609,6 +645,10 @@ def fEscreveDadger(strPathSource, strPathExport, strNomeArqv, vMeses, vAnos, vCo
                                  int(float(vMinTermica[j + (vAnos[1] - vAnos[0])][2][vMeses[1]]))  # Segundo estagio
                                  ]
 
+                            custo = [float(vCustoTermicaMes[j][2][vMeses[0]]),
+                                     float(vCustoTermicaMes[j + (vAnos[1] - vAnos[0])][2][vMeses[1]])
+                                     ]
+
                             aux1 = \
                             'CT' + '{:>5}'.format(vConfigTerm[i][0]) + \
                             '{:>4}'.format(str(vConfigTerm[i][2])) + ' ' * 3 + \
@@ -616,13 +656,13 @@ def fEscreveDadger(strPathSource, strPathExport, strNomeArqv, vMeses, vAnos, vCo
                             '{:>2}'.format(str(1)) + ' ' * 3 + \
                             str('{:4d}'.format(vInflexbilidade[0])) + '.' + \
                             str('{:4d}'.format(vDisponibilidade[0])) + '.' + \
-                            '{:>10}'.format(vCustoTermica[i][2][1]) + \
+                            '{:>10}'.format(custo[0]) + \
                             str('{:4d}'.format(vInflexbilidade[0])) + '.' + \
                             str('{:4d}'.format(vDisponibilidade[0])) + '.' + \
-                            '{:>10}'.format(vCustoTermica[i][2][1]) + \
+                            '{:>10}'.format(custo[0]) + \
                             str('{:4d}'.format(vInflexbilidade[0])) + '.' + \
                             str('{:4d}'.format(vDisponibilidade[0])) + '.' + \
-                            '{:>10}'.format(vCustoTermica[i][2][1]) +'\n'
+                            '{:>10}'.format(custo[0]) +'\n'
 
                             aux2 = \
                             'CT' + '{:>5}'.format(vConfigTerm[i][0]) + \
@@ -631,13 +671,13 @@ def fEscreveDadger(strPathSource, strPathExport, strNomeArqv, vMeses, vAnos, vCo
                             '{:>2}'.format(str(EstM1+1)) + ' ' * 3 + \
                             str('{:4d}'.format(vInflexbilidade[1])) + '.' + \
                             str('{:4d}'.format(vDisponibilidade[1])) + '.' + \
-                            '{:>10}'.format(vCustoTermica[i][2][1]) + \
+                            '{:>10}'.format(custo[1]) + \
                             str('{:4d}'.format(vInflexbilidade[1])) + '.' + \
                             str('{:4d}'.format(vDisponibilidade[1])) + '.' + \
-                            '{:>10}'.format(vCustoTermica[i][2][1]) + \
+                            '{:>10}'.format(custo[1]) + \
                             str('{:4d}'.format(vInflexbilidade[1])) + '.' + \
                             str('{:4d}'.format(vDisponibilidade[1])) + '.' + \
-                            '{:>10}'.format(vCustoTermica[i][2][1]) +'\n'
+                            '{:>10}'.format(custo[1]) +'\n'
                             fileExport.write(aux1)
                             fileExport.write(aux2)
                             break
@@ -1021,6 +1061,7 @@ def fEscreveDadgnl(strPath, strArqv, strPathExport, EstM1, strDataInicial, vMese
 
     fileExport.close()
     return
+
 
 def fEscreveExpansao(strPathExport, strNomeArqv, vExpansao, vMeses, vAnos, vUH, vAC):
 
