@@ -3,7 +3,6 @@ import numpy as np
 from bokeh.plotting import figure, show, output_file
 from bokeh.palettes import Category20
 from bokeh.models import ColumnDataSource, CategoricalColorMapper, NumeralTickFormatter, CustomJS, HoverTool, Label
-#bokeh.models.annotations import Label
 from bokeh.models.widgets import Select, TextInput, RangeSlider, DataTable, TableColumn, NumberFormatter, Button
 from bokeh.layouts import layout, widgetbox, row, column, Spacer
 from bokeh.io import curdoc
@@ -17,7 +16,7 @@ path = r'C:\Onedrive\Middle Office\Middle\Decks\gevazp\2018\01\201802\export_1'
 path_mlt = r'C:\Onedrive\Middle Office\Middle\Decks\gevazp\2018\01\201802/mlt.csv'
 nome = r'resultados.csv'
 nome_mlt = 'mlt.csv'
-mes = 6
+mes = 7
 sub_ref = 1
 sub_aux = 2
 ena_partida = {
@@ -316,8 +315,8 @@ def update():
     text_2.text = '''
     Mediana: {:3.1f}
     Media: {:3.1f}
-    5: {:3.1f}
-    95: {:3.1f}
+    p5: {:3.1f}
+    p95: {:3.1f}
     '''.format(
         np.median(df_aux.loc[:, ('preco', 1)]),
         np.mean(df_aux.loc[:, ('preco', 1)]),
