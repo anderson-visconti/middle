@@ -5,10 +5,13 @@ import os
 
 configs = {
     'paths_excel': [
-        r'C:\Users\anderson.visconti\Desktop\teste\1\LP_1.xlsm',
-        r'C:\Users\anderson.visconti\Desktop\teste\2\LP_2.xlsm',
-        r'C:\Users\anderson.visconti\Desktop\teste\3\LP_3.xlsm',
+        r'C:\Onedrive\Middle Office\Middle\Decks\Prospectivos\2018\05\p1-pessimista\01\vazoes\01-LP.xlsm',
+        r'C:\Onedrive\Middle Office\Middle\Decks\Prospectivos\2018\05\p1-pessimista\02\vazoes\02-LP.xlsm',
+        r'C:\Onedrive\Middle Office\Middle\Decks\Prospectivos\2018\05\p1-pessimista\03\vazoes\03-LP.xlsm',
+        r'C:\Onedrive\Middle Office\Middle\Decks\Prospectivos\2018\05\p1-pessimista\04\vazoes\04-LP.xlsm',
+        r'C:\Onedrive\Middle Office\Middle\Decks\Prospectivos\2018\05\p1-pessimista\05\vazoes\05-LP.xlsm',
     ],
+
     'sheet_name': r'Resultado Final',
     'vazpast': r'VazPast',
     'coords_resultado': {

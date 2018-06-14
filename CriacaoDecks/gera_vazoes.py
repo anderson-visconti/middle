@@ -73,11 +73,10 @@ def gerar(strPath, strNomeArquivo, strNomeArqvProj, intAnoInicial):
 #
 # O script acrescenta 1 ano apenas para facilitar ao ano inicial indicado e repete os valores
 #
+import os
 strPath = [
-    r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2018\03\teste\01\vazoes',
-    r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2018\03\teste\02\vazoes',
-    r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2018\03\teste\03\vazoes',
-    r'C:\OneDrive\Middle Office\Middle\Decks\Prospectivos\2018\03\teste\04\vazoes'
+    r'C:\Onedrive\Middle Office\Middle\Decks\Prospectivos\2018\06\p2\gevazp\vazoes',
+
 ]
 
 strPathExport = strPath  # Caminho de exportacao (no caso, e o mesmo que o caminho de importacao)
