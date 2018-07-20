@@ -1,4 +1,8 @@
-class Hidrologia:
+import openpyxl as pyxl
+import pandas as pd
+import pyexcel
+
+class Hidrologia(object):
     def __init__(self):
         pass
 
@@ -186,9 +190,6 @@ class Hidrologia:
         self.dados = df_vazao
         return
 
-    def check_postos(self):
-        pass
-
     def calculate_postos(self):
         df_calculado = []
 
@@ -290,34 +291,7 @@ class Hidrologia:
         return
 
 
-    def format_rdh(self):
-        pass
+class Calculador(object):
 
-    def format_acomph(self):
-        pass
-
-if __name__ == '__main__':
-    import pandas as pd
-    import openpyxl as pyxl
-    import pyexcel
-
-    rdhs = [
-        r'C:\OneDrive\Middle Office\Middle\Hidrologia\Relatorios\RDH\2018\RDH12JUL.xlsx',
-        r'C:\OneDrive\Middle Office\Middle\Hidrologia\Relatorios\RDH\2018\RDH13JUL.xlsx'
-    ]
-
-    acomphs = [
-        r'C:\Onedrive\Middle Office\Middle\Hidrologia\Relatorios\AcompH\2018\ACOMPH_20180713.xls'
-    ]
-    hidro = Hidrologia()
-
-    config_acomph = dict(
-        row=[6, 35],
-        bloco_dados=8
-    )
-
-    hidro.get_acomph(
-        acomphs=acomphs,
-        config_acomph=config_acomph)
-
-    hidro.calculate_postos()
+    def realiza_calculo(self, dados, posto):
+        posto.calcula(dados)
