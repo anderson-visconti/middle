@@ -104,11 +104,11 @@ class P318(Posto):
 
         p_318 = dict(
             num_posto=[318] * p_116.vaz_calculada['dat_medicao'].count(),
-            dat_medicao=p_116.vaz_calculada['dat_medicao'],
+            dat_medicao=p_301['dat_medicao'],
             val_vaz_natr=(
-                    p_116.vaz_calculada['val_vaz_natr'] +
-                    0.1 * (p_161['val_vaz_natr'] - p_117['val_vaz_natr'] - p_301['val_vaz_natr']) +
-                    p_117['val_vaz_natr'] + p_301['val_vaz_natr']
+                    p_116.vaz_calculada['val_vaz_natr'].values +
+                    0.1 * (p_161['val_vaz_natr'].values - p_117['val_vaz_natr'].values - p_301['val_vaz_natr'].values) +
+                    p_117['val_vaz_natr'].values + p_301['val_vaz_natr'].values
             )
         )
 
@@ -131,10 +131,10 @@ class P37(Posto):
                 num_posto=[37] * p_237['dat_medicao'].count(),
                 dat_medicao=dados['dat_medicao'].unique(),
                 val_vaz_natr=(
-                        p_237['val_vaz_natr'] -
-                        0.1 * (p_161['val_vaz_natr'] - p_117['val_vaz_natr'] - p_301['val_vaz_natr']) -
-                        p_117['val_vaz_natr'] -
-                        p_301['val_vaz_natr']
+                        p_237['val_vaz_natr'].values -
+                        0.1 * (p_161['val_vaz_natr'].values - p_117['val_vaz_natr'].values - p_301['val_vaz_natr'].values) -
+                        p_117['val_vaz_natr'].values -
+                        p_301['val_vaz_natr'].values
                 )
             )
         )
@@ -159,10 +159,10 @@ class P38(Posto):
                 num_posto=[38] * p_238['dat_medicao'].count(),
                 dat_medicao=dados['dat_medicao'].unique(),
                 val_vaz_natr=(
-                        p_238['val_vaz_natr'] -
-                        0.1 * (p_161['val_vaz_natr'] - p_117['val_vaz_natr'] - p_301['val_vaz_natr']) -
-                        p_117['val_vaz_natr'] -
-                        p_301['val_vaz_natr']
+                        p_238['val_vaz_natr'].values -
+                        0.1 * (p_161['val_vaz_natr'].values - p_117['val_vaz_natr'].values - p_301['val_vaz_natr'].values) -
+                        p_117['val_vaz_natr'].values -
+                        p_301['val_vaz_natr'].values
                 )
             )
         )
@@ -185,10 +185,10 @@ class P39(Posto):
                 num_posto=[39] * p_239['dat_medicao'].count(),
                 dat_medicao=dados['dat_medicao'].unique(),
                 val_vaz_natr=(
-                        p_239['val_vaz_natr'] -
-                        0.1 * (p_161['val_vaz_natr'] - p_117['val_vaz_natr'] - p_301['val_vaz_natr']) -
-                        p_117['val_vaz_natr'] -
-                        p_301['val_vaz_natr']
+                        p_239['val_vaz_natr'].values -
+                        0.1 * (p_161['val_vaz_natr'].values - p_117['val_vaz_natr'].values - p_301['val_vaz_natr'].values) -
+                        p_117['val_vaz_natr'].values -
+                        p_301['val_vaz_natr'].values
                 )
             )
         )
@@ -211,10 +211,10 @@ class P40(Posto):
                 num_posto=[40] * p_240['dat_medicao'].count(),
                 dat_medicao=dados['dat_medicao'].unique(),
                 val_vaz_natr=(
-                        p_240['val_vaz_natr'] -
-                        0.1 * (p_161['val_vaz_natr'] - p_117['val_vaz_natr'] - p_301['val_vaz_natr']) -
-                        p_117['val_vaz_natr'] -
-                        p_301['val_vaz_natr']
+                        p_240['val_vaz_natr'].values -
+                        0.1 * (p_161['val_vaz_natr'].values - p_117['val_vaz_natr'].values - p_301['val_vaz_natr'].values) -
+                        p_117['val_vaz_natr'].values -
+                        p_301['val_vaz_natr'].values
                 )
             )
         )
@@ -237,10 +237,10 @@ class P42(Posto):
                 num_posto=[42] * p_242['dat_medicao'].count(),
                 dat_medicao=dados['dat_medicao'].unique(),
                 val_vaz_natr=(
-                        p_242['val_vaz_natr'] -
-                        0.1 * (p_161['val_vaz_natr'] - p_117['val_vaz_natr'] - p_301['val_vaz_natr']) -
-                        p_117['val_vaz_natr'] -
-                        p_301['val_vaz_natr']
+                        p_242['val_vaz_natr'].values -
+                        0.1 * (p_161['val_vaz_natr'].values - p_117['val_vaz_natr'].values - p_301['val_vaz_natr'].values) -
+                        p_117['val_vaz_natr'].values -
+                        p_301['val_vaz_natr'].values
                 )
             )
         )
@@ -263,10 +263,10 @@ class P43(Posto):
                 num_posto=[43] * p_243['dat_medicao'].count(),
                 dat_medicao=dados['dat_medicao'].unique(),
                 val_vaz_natr=(
-                        p_243['val_vaz_natr'] -
-                        0.1 * (p_161['val_vaz_natr'] - p_117['val_vaz_natr'] - p_301['val_vaz_natr']) -
-                        p_117['val_vaz_natr'] -
-                        p_301['val_vaz_natr']
+                        p_243['val_vaz_natr'].values -
+                        0.1 * (p_161['val_vaz_natr'].values - p_117['val_vaz_natr'].values - p_301['val_vaz_natr'].values) -
+                        p_117['val_vaz_natr'].values -
+                        p_301['val_vaz_natr'].values
                 )
             )
         )
@@ -289,10 +289,10 @@ class P45(Posto):
                 num_posto=[45] * p_245['dat_medicao'].count(),
                 dat_medicao=dados['dat_medicao'].unique(),
                 val_vaz_natr=(
-                        p_245['val_vaz_natr'] -
-                        0.1 * (p_161['val_vaz_natr'] - p_117['val_vaz_natr'] - p_301['val_vaz_natr']) -
-                        p_117['val_vaz_natr'] -
-                        p_301['val_vaz_natr']
+                        p_245['val_vaz_natr'].values -
+                        0.1 * (p_161['val_vaz_natr'].values - p_117['val_vaz_natr'].values - p_301['val_vaz_natr'].values) -
+                        p_117['val_vaz_natr'].values -
+                        p_301['val_vaz_natr'].values
                 )
             )
         )
@@ -315,10 +315,10 @@ class P46(Posto):
                 num_posto=[46] * p_246['dat_medicao'].count(),
                 dat_medicao=dados['dat_medicao'].unique(),
                 val_vaz_natr=(
-                        p_246['val_vaz_natr'] -
-                        0.1 * (p_161['val_vaz_natr'] - p_117['val_vaz_natr'] - p_301['val_vaz_natr']) -
-                        p_117['val_vaz_natr'] -
-                        p_301['val_vaz_natr']
+                        p_246['val_vaz_natr'].values -
+                        0.1 * (p_161['val_vaz_natr'].values - p_117['val_vaz_natr'].values - p_301['val_vaz_natr'].values) -
+                        p_117['val_vaz_natr'].values -
+                        p_301['val_vaz_natr'].values
                 )
             )
         )
@@ -340,10 +340,10 @@ class P66(Posto):
                 num_posto=[66] * p_266['dat_medicao'].count(),
                 dat_medicao=dados['dat_medicao'].unique(),
                 val_vaz_natr=(
-                        p_266['val_vaz_natr'] -
-                        0.1 * (p_161['val_vaz_natr'] - p_117['val_vaz_natr'] - p_301['val_vaz_natr']) -
-                        p_117['val_vaz_natr'] -
-                        p_301['val_vaz_natr']
+                        p_266['val_vaz_natr'].values -
+                        0.1 * (p_161['val_vaz_natr'].values - p_117['val_vaz_natr'].values - p_301['val_vaz_natr'].values) -
+                        p_117['val_vaz_natr'].values -
+                        p_301['val_vaz_natr'].values
                 )
             )
         )
@@ -398,18 +398,21 @@ class P298(Posto):
 
 class P304(Posto):
     def calcula(self, dados):
-        p_315 = pd.DataFrame(dados.loc[dados['num_posto'] == 315])
-        p_316 = pd.DataFrame(dados.loc[dados['num_posto'] == 316])
+        p_315 = P315()
+        p_315.calcula(dados=dados)
+        p_316 = P316()
+        p_316.calcula(dados=dados)
 
         p_304 = pd.DataFrame().from_dict(
             dict(
-                num_posto=[304] * p_315['dat_medicao'].count(),
-                dat_medicao=p_315['dat_medicao'],
-                val_vaz_natr=p_315['val_vaz_natr'] - p_316['val_vaz_natr']
+                num_posto=[304] * p_315.vaz_calculada['dat_medicao'].count(),
+                dat_medicao=p_315.vaz_calculada['dat_medicao'],
+                val_vaz_natr=p_315.vaz_calculada['val_vaz_natr'].values - p_316.vaz_calculada['val_vaz_natr'].values
             )
         )
 
         self.vaz_calculada = p_304
+
         return self.vaz_calculada
 
 class P127(Posto):
@@ -421,18 +424,19 @@ class P127(Posto):
         p_304.calcula(dados=dados)
         p_203 = P203()
         p_203.calcula(dados=dados)
+
         p_127 = pd.DataFrame.from_dict(
             dict(
                 num_posto=[127] * p_129['dat_medicao'].count(),
-                dat_medicao=p_129['dat_medicao'].count(),
-                val_vaz_natr=(
-                    p_129['val_vaz_natr'] -
-                    p_298.vaz_calculada['val_vaz_natr'] -
-                    p_304.vaz_calculada['val_vaz_natr'] +
-                    p_203.vaz_calculada['val_vaz_natr']
-                )
+                dat_medicao=p_129['dat_medicao'],
+                val_vaz_natr=p_129.loc[:, 'val_vaz_natr'] -
+                             p_298.vaz_calculada.loc[:, 'val_vaz_natr'] -
+                             p_304.vaz_calculada.loc[:, 'val_vaz_natr'] +
+                             p_203.vaz_calculada.loc[:, 'val_vaz_natr']
             )
         )
+
+        print(p_127)
 
         self.vaz_calculada = p_127
         return self.vaz_calculada
@@ -469,9 +473,9 @@ class P315(Posto):
                 num_posto=[315] * p_201['dat_medicao'].count(),
                 dat_medicao=p_201['dat_medicao'],
                 val_vaz_natr=(
-                        (p_203.vaz_calculada['val_vaz_natr'] - p_201['val_vaz_natr']) +
-                        p_317.vaz_calculada['val_vaz_natr'] +
-                        p_298.vaz_calculada['val_vaz_natr']
+                        (p_203.vaz_calculada['val_vaz_natr'].values - p_201['val_vaz_natr'].values) +
+                        p_317.vaz_calculada['val_vaz_natr'].values +
+                        p_298.vaz_calculada['val_vaz_natr'].values
                 )
             )
         )
@@ -509,7 +513,10 @@ class P132(Posto):
         val_vaz_natr = list()
 
         for i, row in p_202.iterrows():
-            val_vaz_natr.append(row['val_vaz_natr'] + min(p_201.loc[i, 'val_vaz_natr'], 25.0))
+            val_vaz_natr.append(
+                row['val_vaz_natr'] +
+                min(p_201.loc[p_201['dat_medicao'] == row['dat_medicao'], 'val_vaz_natr'].values, 25.0)
+            )
 
         p_132 = pd.DataFrame.from_dict(
             dict(
@@ -559,9 +566,9 @@ class P303(Posto):
                 val_vaz_natr.append(
                     p_132.vaz_calculada.loc[i, 'val_vaz_natr'] +
                     min(
-                        p_316.loc[i, 'val_vaz_natr'] -
-                        p_131.vaz_calculada.loc[i, 'val_vaz_natr'] -
-                        p_123.loc[i, 'val_vaz_natr'],
+                        p_316.loc[p_316['dat_medicao'] == row['dat_medicao'], 'val_vaz_natr'].values -
+                        p_131.vaz_calculada.loc[p_131.vaz_calculada['dat_medicao'] == row['dat_medicao'], 'val_vaz_natr'].values -
+                        p_123.loc[p_123['dat_medicao'] == row['dat_medicao'], 'val_vaz_natr'].values,
                         34.0
                     )
                 )
@@ -569,8 +576,9 @@ class P303(Posto):
                 val_vaz_natr.append(
                     17.0 +
                     min(
-                        p_316.loc[i, 'val_vaz_natr'] -
-                        (p_131.vaz_calculada.loc[i, 'val_vaz_natr'] + p_123.loc[i, 'val_vaz_natr']),
+                        p_316.loc[p_316['dat_medicao'] == row['dat_medicao'], 'val_vaz_natr'].values -
+                        (p_131.vaz_calculada.loc[p_131.vaz_calculada['dat_medicao'] == row['dat_medicao'], 'val_vaz_natr'].values +
+                         p_123.loc[p_123['dat_medicao'] == row['dat_medicao'], 'val_vaz_natr'].values),
                         34.0
                     )
                 )
@@ -593,15 +601,21 @@ class P126(Posto):
         p_123 = pd.DataFrame(dados.loc[dados['num_posto'] == 123])
         val_vaz_natr = list()
 
+        print(p_123)
         for i, row in p_123.iterrows():
 
-            if p_127.vaz_calculada.loc[i, 'val_vaz_natr'] <= 430.0:
+            if p_127.vaz_calculada.loc[p_127.vaz_calculada['dat_medicao'] == row['dat_medicao'], 'val_vaz_natr'].values <= 430.0:
+
                 val_vaz_natr.append(
-                    max(0.0, p_127.vaz_calculada[i, 'val_vaz_natr'] - 90.0) + p_123.loc[i, 'val_vaz_natr']
+                    max(
+                        0.0,
+                        p_127.vaz_calculada.loc[p_127.vaz_calculada['dat_medicao'] == row['dat_medicao'], 'val_vaz_natr'].values - 90.0
+                    ) + p_123.loc[i, 'val_vaz_natr']
                 )
+
             else:
                 val_vaz_natr.append(
-                    340.0 + p_123.loc[i, 'val_vaz_natr']
+                    340.0 + p_123.loc[p_123.loc[p_123['dat_medicao'] == row['dat_medicao']], 'val_vaz_natr']
 
                 )
 
@@ -632,11 +646,11 @@ class P299(Posto):
                 num_posto=[299] * p_130['dat_medicao'].count(),
                 dat_medicao=p_130['dat_medicao'],
                 val_vaz_natr=(
-                    p_130['val_vaz_natr'] -
-                    p_298.vaz_calculada['val_vaz_natr'] -
-                    p_203.vaz_calculada['val_vaz_natr'] +
-                    p_304.vaz_calculada['val_vaz_natr'] +
-                    p_123['val_vaz_natr']
+                    p_130['val_vaz_natr'].values -
+                    p_298.vaz_calculada['val_vaz_natr'].values -
+                    p_203.vaz_calculada['val_vaz_natr'].values +
+                    p_304.vaz_calculada['val_vaz_natr'].values +
+                    p_123['val_vaz_natr'].values
                 )
             )
         )
@@ -653,7 +667,10 @@ class P131(Posto):
         val_vaz_natr = list()
         for i, row in p_123.iterrows():
             val_vaz_natr.append(
-                min(p_316.vaz_calculada.loc[i, 'val_vaz_natr'], 144.0) + p_123.loc[i, 'val_vaz_natr']
+                min(
+                    p_316.vaz_calculada.loc[p_316.vaz_calculada['dat_medicao'] == row['dat_medicao'], 'val_vaz_natr'].values,
+                    144.0
+                ) + p_123.loc[p_123['dat_medicao'] == row['dat_medicao'], 'val_vaz_natr'].values
             )
 
         p_131 = pd.DataFrame.from_dict(
@@ -678,7 +695,7 @@ class P306(Posto):
             dict(
                 num_posto=[303] * p_131.vaz_calculada['dat_medicao'].count(),
                 dat_medicao=p_131.vaz_calculada['dat_medicao'],
-                val_vaz_natr=p_303.vaz_calculada['val_vaz_natr'] + p_131.vaz_calculada['val_vaz_natr']
+                val_vaz_natr=p_303.vaz_calculada['val_vaz_natr'].values + p_131.vaz_calculada['val_vaz_natr'].values
             )
         )
 
@@ -734,7 +751,7 @@ class P302(Posto):
             dict(
                 num_posto=[302] * p_288['dat_medicao'].count(),
                 dat_medicao=p_288['dat_medicao'],
-                val_vaz_natr=p_288['val_vaz_natr'] - p_292.vaz_calculada['val_vaz_natr']
+                val_vaz_natr=p_288['val_vaz_natr'].values - p_292.vaz_calculada['val_vaz_natr'].values
             )
         )
 
